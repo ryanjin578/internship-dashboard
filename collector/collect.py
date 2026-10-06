@@ -9,12 +9,14 @@ import hashlib
 import json
 import re
 import sys
+import threading
 import time
 import xml.etree.ElementTree as ET
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlparse
 
 sys.path.insert(0, str(Path(__file__).parent))
 from common import (BAY, ECE_SALES, NOT_ECE, SEMI_NAME, STATES, grad_only, needs_clearance, DEFENSE, INTERN, OFFTRACK, ROOT, SENIOR, CompanyIndex, eligibility, http, is_us,
@@ -315,8 +317,35 @@ ADAPTERS = {"workday": a_workday, "greenhouse": a_greenhouse, "smartrecruiters":
             "icims": a_icims, "jobvite": a_jobvite, "avature": a_avature}
 
 
+_ashby_boards, _ashby_lock = {}, threading.Lock()
+
+
+def _html_description(url):
+    """Description from a job page: schema.org JobPosting JSON-LD first, then an itemprop="description" block
+    (SuccessFactors, TalentBrew, iCIMS, Jobvite and many custom sites). Returns "" when neither is present."""
+    h = http(url, headers={"Accept": "text/html"})
+    for block in re.findall(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', h, re.S | re.I):
+        try:
+            data = json.loads(block.strip(), strict=False)
+        except ValueError:
+            continue
+        for d in (data if isinstance(data, list) else data.get("@graph", [data]) if isinstance(data, dict) else []):
+            if isinstance(d, dict) and d.get("@type") == "JobPosting" and d.get("description"):
+                return strip_html(d["description"])
+    parts = []  # SuccessFactors splits the text over several itemprop="description" blocks (intro, duties, ...)
+    for m in re.finditer(r'<(?!meta)[a-z]+[^>]*itemprop="description"[^>]*>', h):
+        body = h[m.end():m.end() + 40000]
+        end = re.search(r'joblayouttoken-label|itemprop="description"|class="applylink|</article>|<footer', body)
+        if end:  # cut before the tag that holds the marker, so no half tag is left
+            body = body[:max(0, body.rfind("<", 0, end.start()))]
+        txt = strip_html(body)
+        if txt and txt not in parts:
+            parts.append(txt)
+    return "\n".join(parts)
+
+
 def fetch_detail(d):
-    kind, url = d
+    kind, url = d[0], d[1]
     if kind == "workday":
         return strip_html(jget(url).get("jobPostingInfo", {}).get("jobDescription", ""))
     if kind == "smartrecruiters":
@@ -327,7 +356,115 @@ def fetch_detail(d):
         return strip_html(items[0].get("ExternalDescriptionStr", "") + " " + items[0].get("ExternalQualificationsStr", "")) if items else ""
     if kind == "eightfold":
         return strip_html((jget(url).get("data") or {}).get("jobDescription", ""))
+    if kind == "greenhouse":
+        return strip_html(jget(url).get("content", ""))
+    if kind == "lever":
+        j = jget(url)
+        lists = " ".join(f"{x.get('text', '')}\n{strip_html(x.get('content', ''))}" for x in j.get("lists") or [])
+        return strip_html(f"{j.get('descriptionPlain', '')}\n{lists}\n{j.get('additionalPlain', '')}")
+    if kind == "ashby":  # the public API only lists a whole board, so fetch each board once per run
+        org, job_id = url, d[2]
+        with _ashby_lock:
+            if org not in _ashby_boards:
+                _ashby_boards[org] = {j.get("id"): j for j in jget(f"https://api.ashbyhq.com/posting-api/job-board/{org}").get("jobs", [])}
+        return (_ashby_boards[org].get(job_id) or {}).get("descriptionPlain", "")
+    if kind == "html":
+        return _html_description(url)
     return ""
+
+
+def detail_from_url(u):
+    """Maps an apply link (mostly from the GitHub repos) to the ATS endpoint that has its description."""
+    p = urlparse(u or "")
+    host, parts = p.netloc.lower(), [x for x in p.path.split("/") if x]
+    if p.scheme not in ("http", "https") or not host:
+        return None
+    q = parse_qs(p.query)
+    if re.match(r"[a-z]{2}-[A-Z]{2}$", parts[0] if parts else ""):
+        parts = parts[1:]
+    m = re.match(r"([a-z0-9-]+)\.wd\d+\.myworkdayjobs\.com$", host)
+    if m and len(parts) >= 3 and "job" in parts[1:]:
+        k = parts.index("job", 1)
+        return ["workday", f"https://{host}/wday/cxs/{m.group(1)}/{parts[0]}/{'/'.join(parts[k:])}"]
+    if re.match(r"wd\d+\.myworkdaysite\.com$", host) and len(parts) >= 4 and parts[0] == "recruiting" and "job" in parts:
+        k = parts.index("job")
+        return ["workday", f"https://{host}/wday/cxs/{parts[1]}/{parts[2]}/{'/'.join(parts[k:])}"]
+    if "greenhouse.io" in host:
+        if parts[:1] == ["embed"] and q.get("for") and q.get("token"):
+            return ["greenhouse", f"https://boards-api.greenhouse.io/v1/boards/{q['for'][0]}/jobs/{q['token'][0]}"]
+        if len(parts) >= 3 and parts[1] == "jobs" and parts[2].isdigit():
+            return ["greenhouse", f"https://boards-api.greenhouse.io/v1/boards/{parts[0]}/jobs/{parts[2]}"]
+    if q.get("gh_jid") and q["gh_jid"][0].isdigit():
+        return ["html", u]  # company page wrapping a Greenhouse board; the board name isn't in the link
+    if host in ("jobs.lever.co", "jobs.eu.lever.co") and len(parts) >= 2:
+        api = "api.eu.lever.co" if ".eu." in host else "api.lever.co"
+        return ["lever", f"https://{api}/v0/postings/{parts[0]}/{parts[1]}"]
+    if host == "jobs.ashbyhq.com" and len(parts) >= 2:
+        return ["ashby", parts[0], parts[1]]
+    if host == "jobs.smartrecruiters.com" and len(parts) >= 2 and re.match(r"\d+", parts[1]):
+        return ["smartrecruiters", f"https://api.smartrecruiters.com/v1/companies/{parts[0]}/postings/{re.match(r'\d+', parts[1]).group(0)}"]
+    if host.endswith("oraclecloud.com") and "sites" in parts and "job" in parts:
+        site, job_id = parts[parts.index("sites") + 1], parts[parts.index("job") + 1] if len(parts) > parts.index("job") + 1 else ""
+        if job_id.isdigit():
+            return ["oracle", f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{job_id}%22,siteNumber={site}"]
+    pid = (parts[2] if len(parts) >= 3 and parts[:2] == ["careers", "job"] and parts[2].isdigit() else (q.get("pid") or [""])[0])
+    if pid and (host.endswith(".eightfold.ai") or parts[:1] == ["careers"]):
+        domain = f"{host.split('.')[0]}.com" if host.endswith(".eightfold.ai") else ".".join(host.split(".")[-2:])
+        return ["eightfold", f"https://{host}/api/pcsx/position_details?position_id={pid}&domain={domain}&hl=en"]
+    if host.endswith(".icims.com") and "/jobs/" in p.path:
+        return ["html", f"{p.scheme}://{host}{p.path}?in_iframe=1"]  # the bare page is a wrapper frame
+    if host.endswith("myworkdayjobs.com") or host.endswith("myworkdaysite.com"):
+        return None  # Workday search/landing pages: nothing to read
+    return ["html", u]
+
+
+def fill_descriptions(listings, cap, budget_s):
+    """Fetches missing descriptions: one worker per host (so each site sees one request at a time, with a pause),
+    up to 8 hosts in parallel, stopping at `cap` fetches or `budget_s` seconds. Returns per-source counts."""
+    todo = {}
+    for l in listings:
+        d = l.get("detail") or detail_from_url(l.get("url"))
+        if d:
+            host = urlparse(d[1]).netloc if d[0] != "ashby" else "api.ashbyhq.com"
+            todo.setdefault(host, []).append((l, d))
+    deadline, lock = time.time() + budget_s, threading.Lock()
+    left = [cap]
+    stats = {"filled": Counter(), "empty": Counter(), "failed": Counter(), "unsupported": Counter(), "blocked": Counter(), "skipped": 0}
+    for l in listings:
+        if not (l.get("detail") or detail_from_url(l.get("url"))):
+            stats["unsupported"][l["sources"][0]] += 1
+
+    def work(items):
+        streak = 0  # consecutive failures on this host; a site that blocks scripts (e.g. tesla.com) is dropped after 3
+        for n, (l, d) in enumerate(items):
+            if streak >= 3:
+                with lock:
+                    stats["blocked"][urlparse(d[1]).netloc or d[0]] += len(items) - n
+                return
+            with lock:
+                if left[0] <= 0 or time.time() > deadline:
+                    stats["skipped"] += 1
+                    continue
+                left[0] -= 1
+            src = l["sources"][0]
+            try:
+                txt = fetch_detail(d).strip()
+                streak = 0
+                with lock:
+                    if len(txt) >= 80:
+                        l["desc"] = txt[:4000]
+                        stats["filled"][src] += 1
+                    else:
+                        stats["empty"][src] += 1
+            except Exception:
+                streak += 1
+                with lock:
+                    stats["failed"][src] += 1
+            time.sleep(0.25)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(work, todo.values()))
+    return stats
 
 
 # ---------- repo adapters ----------
@@ -514,18 +651,23 @@ def main():
                 failed_sources.add(src["name"])
                 status.append({"name": src["name"], "company": "", "ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"})
 
-    # descriptions for brand-new official listings only (keeps runs fast and polite)
-    budget = CFG.get("detail_fetch_cap", 80)
+    # descriptions: reuse last night's, fetch only what is new or still missing (capped, time-boxed, polite)
     for lid, l in current.items():
         old = prev.get(lid)
         if old and old.get("desc") and not l["desc"]:
             l["desc"] = old["desc"]
-        if not l["desc"] and l.get("detail") and budget > 0:
-            budget -= 1
-            try:
-                l["desc"] = fetch_detail(l["detail"])[:4000]
-            except Exception:
-                pass
+    missing = [l for l in current.values() if not l["desc"] and not l.get("inactive")]
+    t0 = time.time()
+    st = fill_descriptions(missing, CFG.get("detail_fetch_cap", 600), CFG.get("detail_time_budget_s", 240))
+    top = lambda c: ", ".join(f"{k} {v}" for k, v in c.most_common(8)) or "none"
+    print(f"descriptions: {sum(st['filled'].values())} filled of {len(missing)} missing in {time.time() - t0:.0f}s; "
+          f"{sum(st['empty'].values())} had none, {sum(st['failed'].values())} failed, {st['skipped']} left for next run, "
+          f"{sum(st['unsupported'].values())} with no readable link", flush=True)
+    print(f"  filled by source: {top(st['filled'])}", flush=True)
+    if st["failed"]:
+        print(f"  failed by source: {top(st['failed'])}", flush=True)
+    if st["blocked"]:
+        print(f"  sites skipped after 3 failures in a row: {top(st['blocked'])}", flush=True)
 
     # merge with history
     listings = []

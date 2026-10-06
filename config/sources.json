@@ -11,6 +11,7 @@
   {"name": "Khushsj30 hardware 2027", "type": "md_table", "default_term": "Unspecified",
    "url": "https://raw.githubusercontent.com/Khushsj30/hardware-internships-2027/main/README.md"}
  ],
- "detail_fetch_cap": 80,
+ "detail_fetch_cap": 600,
+ "detail_time_budget_s": 240,
  "close_after_missed_runs": 2
 }

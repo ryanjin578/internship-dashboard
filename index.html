@@ -113,12 +113,15 @@ textarea{resize:vertical}
 .match ul{margin:6px 0 0;padding-left:18px}
 .match li{margin-bottom:6px}
 .err{color:var(--red);font-size:14px}
-.spinner{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-1px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.spinner{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-1px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;opacity:.85;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spinner{display:none}}
 .save-status{display:inline-flex;align-items:center;gap:5px;font-size:14px}
 .save-status svg{width:15px;height:15px;flex:none}
 .save-status.ok{color:var(--accent)}.save-status.bad{color:var(--red)}.save-status.dirty{color:var(--amber);font-weight:600}
+.save-status.mini{margin-left:6px;vertical-align:middle}.save-status.mini svg{width:14px;height:14px}
+.top .save-status{font-size:13px}
+.jd-src{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;letter-spacing:.02em}
 .saved-at{margin:-8px 0 0}
 .note{color:var(--muted);font-size:13px}
 .hist{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
@@ -131,6 +134,7 @@ textarea{resize:vertical}
 <div class="top">
   <h1>Summer 2027 search</h1>
   <div class="meta" id="meta">Loading listings</div>
+  <span class="save-status" id="hdrMsg" role="status" aria-live="polite"></span>
   <button class="btn" id="exportBtn">Back up</button>
   <button class="btn" id="settingsBtn">Settings</button>
 </div>
@@ -169,7 +173,7 @@ const SEEDS = [
   {company:"Western Digital", title:"Summer 2027 intern (firmware track)", location:"", lane:"swe", deadline:"2026-10-20", notes:"Two umbrella reqs (SWE + HW), firmware track in both. Apply to both."},
   {company:"IBM", title:"Technical Sales Engineer Intern", location:"", lane:"sales", notes:"Entry-Level Sales Program 2027. Also a Co-Op version."},
 ];
-const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, analyses:{}, jds:{}, lastVisit:null, seeded:false,
+const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, analyses:{}, jds:{}, jdsAt:{}, lastVisit:null, seeded:false,
   settings:{apiKey:"", model:"claude-haiku-4-5-20251001", profile:"Purdue sophomore, BS Integrated Business & Engineering (CODO to Computer Engineering in progress), graduating May 2029, US citizen, targets FAE / sales engineering first.",
     resume:"", planned:DEFAULT_PLANNED, followDays:14,
     goals:{p1:15, p1By:"2026-10-15", all:40, allBy:"2026-11-30"}}});
@@ -184,7 +188,7 @@ function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s) ret
 function normalize(s){
   const b = blank(), num = (v, d, max) => Math.min(max, Math.max(0, Math.round(Number(v)) || d));
   const o = {...b, ...s, settings:{...b.settings, ...s.settings, goals:{...b.settings.goals, ...(s.settings||{}).goals}}};
-  for(const k of ["items","hidden","companyNotes","analyses","jds"]) if(!o[k] || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};
+  for(const k of ["items","hidden","companyNotes","analyses","jds","jdsAt"]) if(!o[k] || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};
   if(!Array.isArray(o.contacts)) o.contacts = [];
   const st = o.settings, g = st.goals;
   for(const k of ["apiKey","model","profile","resume","planned"]) if(typeof st[k] !== "string") st[k] = b.settings[k];
@@ -206,14 +210,77 @@ function storageError(e){
   if(e && e.name === "SecurityError") return "browser storage is blocked";
   return "couldn't write to browser storage";
 }
-function savedAgo(iso){
+function savedAgo(iso, prefix = "Last saved ", never = "Not saved yet"){
   const t = iso ? new Date(iso) : null;
-  if(!t || isNaN(t)) return "Not saved yet";
+  if(!t || isNaN(t)) return never;
   const s = (Date.now() - t) / 1000;
-  if(s < 60) return "Last saved just now";
-  if(s < 3600) return `Last saved ${Math.floor(s / 60)} min ago`;
-  if(s < 86400) return `Last saved ${Math.floor(s / 3600)} h ago`;
-  return "Last saved " + t.toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+  if(s < 60) return prefix + "just now";
+  if(s < 3600) return `${prefix}${Math.floor(s / 60)} min ago`;
+  if(s < 86400) return `${prefix}${Math.floor(s / 3600)} h ago`;
+  return prefix + t.toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+}
+
+/* ---------- action feedback: one pattern for every button ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const nowIso = () => new Date().toISOString();
+class UserError extends Error {}  // message shown as-is (no "Save failed:" prefix)
+function feedback(el, cls, text){
+  if(!el) return;
+  el.className = "save-status" + (el.classList.contains("mini") ? " mini" : "") + (cls ? " " + cls : "");
+  el.innerHTML = (cls === "ok" ? ICON_CHECK : cls === "bad" ? ICON_X : "") + esc(text || "");
+}
+/* Reads storage back and compares one slice of it (pick) with what is in memory. */
+function storedMatches(pick){
+  let saved;
+  try{ const raw = localStorage.getItem(KEY); if(raw === null) return "nothing was stored"; saved = JSON.parse(raw); }
+  catch(e){ return "couldn't read it back"; }
+  return JSON.stringify(pick(saved) ?? null) === JSON.stringify(pick(S) ?? null) ? null : "stored data doesn't match";
+}
+/* Spinner on btn (at least 400 ms) while fn runs, then verify, then ✓ / ✗ in opts.out.
+   opts: {busy, ok, fail (prefix for errors), verify() -> null | reason, out (element or selector, looked up at the end
+   because fn may re-render), fade (ms to clear the ✓), min}. fn receives busy(text) for progress and may return the ✓ text. */
+async function runAction(btn, fn, opts = {}){
+  const t0 = performance.now(), label = btn.innerHTML;
+  const busy = text => { if(btn.isConnected) btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>${esc(text)}`; };
+  const outEl = () => typeof opts.out === "string" ? $(opts.out) : opts.out;
+  btn.disabled = true; busy(opts.busy || "Saving…"); feedback(outEl(), "", "");
+  let err = null, res;
+  try{
+    res = await fn(busy);
+    if(opts.verify) err = opts.verify(res);
+  }catch(e){
+    err = e instanceof UserError ? e : e instanceof DOMException ? storageError(e) : (e && e.message) || "something went wrong";
+  }
+  await sleep(Math.max(0, (opts.min ?? 400) - (performance.now() - t0)));
+  if(btn.isConnected){ btn.disabled = false; btn.innerHTML = label; }
+  const out = outEl();
+  if(err) feedback(out, "bad", err instanceof UserError ? err.message : (opts.fail ?? "Save failed: ") + err);
+  else{
+    feedback(out, "ok", typeof res === "string" ? res : opts.ok || "Saved");
+    if(opts.fade) setTimeout(() => { if(out && out.classList.contains("ok")) feedback(out, "", ""); }, opts.fade);
+  }
+  return !err;
+}
+/* "Unsaved changes" (amber) and a refreshing "Last saved ..." line for a form in the open drawer. */
+function trackForm(fields, statusEl, showAt){
+  const read = () => fields.map(f => f.value);
+  let base = read();
+  const t = {
+    read,
+    isDirty: () => read().some((v, k) => v !== base[k]),
+    refresh(){ if(t.isDirty()) feedback(statusEl, "dirty", "Unsaved changes"); else if(statusEl.classList.contains("dirty")) feedback(statusEl, "", ""); },
+    saved(snap = read()){ base = snap; t.refresh(); showAt(); },
+  };
+  for(const f of fields){ f.addEventListener("input", t.refresh); f.addEventListener("change", t.refresh); }
+  showAt();
+  const timer = setInterval(showAt, 30000);
+  drawerCleanup.push(() => clearInterval(timer)); drawerForms.push(t);
+  return t;
+}
+function applyStatus(i, s){
+  if(i.status === s) return;
+  i.status = s; i.lastActivity = today(); (i.history ||= []).push({s, d:today()});
+  if(s === "Applied" && !i.appliedOn) i.appliedOn = today();
 }
 const ICON_CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const ICON_X = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
@@ -333,7 +400,7 @@ function renderBoard(){
    <section class="panel">
     <header><h2>Apply later</h2><span class="count">${items.length} roles, ${applied().length} applied</span>
       <select class="status-select" id="sortItems" aria-label="Sort"><option value="urgency">Most urgent first</option><option value="match"${ui.sortItems==="match"?" selected":""}>Best match first</option></select>
-      <button class="btn small" id="matchAll">Match all with Claude</button>
+      <button class="btn small" id="matchAll">Match all with Claude</button><span class="save-status" id="matchAllMsg" role="status" aria-live="polite"></span>
       <button class="btn small" id="addManual">Add role</button></header>
     ${fu.cs.length ? `<div class="filters">${fu.cs.map(c => `<span class="chip due" data-contact="${esc(c.id)}" style="cursor:pointer">Follow up: ${esc(c.name)} (${esc(c.company)})</span>`).join("")}</div>` : ""}
     ${items.length ? `<table><thead><tr><th>Role</th><th>Status</th><th>Due</th><th>Match</th></tr></thead><tbody>
@@ -363,11 +430,20 @@ function itemRow(i){
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
     <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong><div class="sub">${esc(a.projected)}% projected</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
 }
+/* Board dropdown: save, read back, then a small ✓ (or ✗ with the reason on hover) next to the select. */
 function setStatus(id, s){
   const i = S.items[id]; if(!i || i.status === s) return;
-  i.status = s; i.lastActivity = today(); (i.history ||= []).push({s, d:today()});
-  if(s === "Applied" && !i.appliedOn) i.appliedOn = today();
-  save(); renderGoals(); render();
+  let err = null;
+  try{ applyStatus(i, s); i.savedAt = nowIso(); persist(); err = storedMatches(st => st.items[id]); }
+  catch(e){ err = storageError(e); }
+  renderGoals(); render();
+  const sel = $(`select[data-status="${CSS.escape(id)}"]`); if(!sel) return;
+  const m = document.createElement("span");
+  m.className = "save-status mini"; m.setAttribute("role", "status");
+  m.setAttribute("aria-label", err ? "Status not saved: " + err : "Status saved");
+  if(err) m.title = "Save failed: " + err;
+  sel.after(m); feedback(m, err ? "bad" : "ok", "");
+  if(!err) setTimeout(() => m.remove(), 2500);
 }
 
 /* ---------- feed ---------- */
@@ -415,13 +491,15 @@ function wireFeed(){
   });
 }
 function rerenderKeepFocus(){ const pos = $("#feedQ").selectionStart; render(); const q = $("#feedQ"); q.focus(); q.setSelectionRange(pos,pos); }
-function saveListing(lid){
-  const l = listingById(lid); if(!l || itemFor(lid)) return;
+function addListingItem(lid){
+  const l = listingById(lid); if(!l) return null;
+  const have = itemFor(lid); if(have) return have.id;
   const id = uid();
   S.items[id] = {id, lid, company:l.company, title:l.title, location:l.location, lane:l.lane, url:l.url, status:"Saved",
-    added:today(), lastActivity:today(), history:[{s:"Saved", d:today()}]};
-  save(); renderGoals(); render();
+    added:today(), lastActivity:today(), savedAt:nowIso(), history:[{s:"Saved", d:today()}]};
+  return id;
 }
+function saveListing(lid){ if(itemFor(lid)) return; addListingItem(lid); save(); renderGoals(); render(); }
 function renderOpenings(){ $("#main").innerHTML = feedPanel(true); wireFeed(); }
 
 /* ---------- quick keyword fit (free, no Claude) ---------- */
@@ -464,15 +542,25 @@ async function claudeMatch(key, company, title, location){
   S.analyses[key] = a; save(); return a;
 }
 async function matchAll(){
-  const btn = $("#matchAll"), todo = Object.values(S.items).filter(i => !analysisFor(i) && !["Rejected","Withdrawn","Offer"].includes(i.status));
-  if(!todo.length){ btn.textContent = "All matched"; return; }
-  let done = 0, skipped = 0; btn.disabled = true;
-  for(const i of todo){
-    btn.textContent = `Matching ${done + skipped + 1} of ${todo.length}`;
-    try{ await claudeMatch(i.lid || i.id, i.company, i.title, i.location); done++; }
-    catch(e){ skipped++; if(/API key|resume|API 4/.test(e.message)){ alert(e.message); break; } }
-  }
-  render(); setTimeout(() => { const b = $("#matchAll"); if(b) b.textContent = `Matched ${done}${skipped ? `, ${skipped} need a job description` : ""}`; }, 0);
+  const todo = Object.values(S.items).filter(i => !analysisFor(i) && !["Rejected","Withdrawn","Offer"].includes(i.status));
+  if(!todo.length){ feedback($("#matchAllMsg"), "ok", "All matched"); return; }
+  await runAction($("#matchAll"), async busy => {
+    let done = 0, noJd = 0, failed = 0, stop = null;
+    try{
+      for(const [n, i] of todo.entries()){
+        busy(`Matching ${n + 1} of ${todo.length}`);
+        try{ await claudeMatch(i.lid || i.id, i.company, i.title, i.location); done++; }
+        catch(e){
+          if(/^No job description/.test(e.message)) noJd++;
+          else if(/API key|resume|API 4/.test(e.message)){ stop = e.message; break; }
+          else failed++;
+        }
+      }
+    }finally{ render(); }  // show whatever finished, even after a stop
+    const summary = [`Matched ${done}`, noJd && `${noJd} need a description`, failed && `${failed} failed`].filter(Boolean).join(", ");
+    if(stop) throw new UserError(`${stop} (${summary})`);
+    return summary;
+  }, {busy:"Matching…", out:"#matchAllMsg"});
 }
 function matchBlock(key, company, title, location){
   const a = S.analyses[key], q = quickFit(jdFor(key));
@@ -484,35 +572,56 @@ function matchBlock(key, company, title, location){
      ${a.gaps?.length ? `<h3>Gaps and the fix</h3><ul>${a.gaps.map(g => `<li><strong>${esc(g.gap)}</strong><br>${esc(g.fix)}</li>`).join("")}</ul>` : ""}
      ${a.keywords?.length ? `<h3>Words to mirror</h3><p>${a.keywords.map(k => `<span class="chip">${esc(k)}</span>`).join("")}</p>` : ""}
      <p class="note">Matched ${fmt(a.at)} with ${esc(a.model)}.</p></div>` : ""}
-   <div class="actions"><button class="btn primary" id="matchBtn">${a ? "Match again" : "Match with Claude"}</button><span class="err" id="matchErr"></span></div>`;
+   <div class="actions"><button class="btn primary" id="matchBtn">${a ? "Match again" : "Match with Claude"}</button><span class="save-status" id="matchMsg" role="status" aria-live="polite"></span></div>`;
 }
 function wireMatch(key, company, title, location, after){
   const b = $("#matchBtn"); if(!b) return;
-  b.onclick = async () => { b.disabled = true; b.textContent = "Matching"; $("#matchErr").textContent = "";
-    try{ await claudeMatch(key, company, title, location); after(); render(); }
-    catch(e){ $("#matchErr").textContent = e.message; b.disabled = false; b.textContent = "Match with Claude"; } };
+  b.onclick = async () => {
+    const ok = await runAction(b, () => claudeMatch(key, company, title, location), {busy:"Matching…", ok:"Matched", fail:"", out:"#matchMsg"});
+    if(ok){ render(); reopenWith("#matchMsg", "Matched", after); }
+  };
 }
+/* A description from the posting wins; the paste box only appears when none could be fetched. */
 function jdBlock(key){
   const l = listingById(key);
-  if(l && l.desc) return `<h3>Job description</h3><div class="jd">${esc(l.desc)}</div>`;
-  return `<h3>Job description</h3><p class="note">This feed doesn't include the description. Paste it from the posting so matching works.</p>
-   <textarea class="field" id="jdPaste" rows="6" placeholder="Paste the job description">${esc(S.jds[key]||"")}</textarea>`;
+  if(l && l.desc) return `<h3>Job description</h3><p class="jd-src">From the posting (auto)</p><div class="jd">${esc(l.desc)}</div>`;
+  return `<h3>Job description</h3><p class="note">Fetch failed: paste it here.</p><p class="jd-src" id="jdSrc"></p>
+   <textarea class="field" id="jdPaste" rows="6" placeholder="Paste the job description">${esc(S.jds[key]||"")}</textarea>
+   <div class="actions"><button class="btn" id="jdSave">Save description</button><span class="save-status" id="jdMsg" role="status" aria-live="polite"></span></div>`;
 }
-function wireJd(key){ const t = $("#jdPaste"); if(t) t.onchange = e => { S.jds[key] = e.target.value; save(); }; }
+function wireJd(key){
+  const t = $("#jdPaste"); if(!t) return;
+  const label = () => { const el = $("#jdSrc"); if(el) el.textContent = S.jds[key] ? "Pasted by you, " + savedAgo(S.jdsAt[key], "saved ", "saved earlier") : ""; };
+  const form = trackForm([t], $("#jdMsg"), label);
+  $("#jdSave").onclick = async () => {
+    const val = t.value.trim(), prev = [S.jds[key], S.jdsAt[key]];
+    t.value = val; const snap = form.read();
+    const ok = await runAction($("#jdSave"), () => {
+      if(val){ S.jds[key] = val; S.jdsAt[key] = nowIso(); } else { delete S.jds[key]; delete S.jdsAt[key]; }
+      persist();
+    }, {verify: () => storedMatches(s => [(s.jds || {})[key], (s.jdsAt || {})[key]]), ok: val ? "Saved" : "Cleared", out:"#jdMsg"});
+    if(ok) form.saved(snap);
+    else{ [S.jds[key], S.jdsAt[key]] = prev; if(prev[0] === undefined){ delete S.jds[key]; delete S.jdsAt[key]; } label(); }
+  };
+}
 
 /* ---------- drawer ---------- */
-// A drawer can set these: guard returns false to keep it open, cleanup runs when it closes or is replaced.
-let drawerGuard = null, drawerCleanup = null;
-function resetDrawerHooks(){ const c = drawerCleanup; drawerGuard = drawerCleanup = null; if(c) c(); }
+// Forms in the open drawer register here (trackForm); cleanup runs when the drawer closes or is replaced.
+// flash: a ✓ to show in the next drawer, for actions that re-render it ({sel, text}).
+let drawerCleanup = [], drawerForms = [], flash = null;
+function resetDrawerHooks(){ const c = drawerCleanup; drawerCleanup = []; drawerForms = []; c.forEach(f => f()); }
+function drawerCanClose(){ return !drawerForms.some(f => f.isDirty()) || confirm("You have unsaved changes. Close without saving?"); }
+function reopenWith(sel, text, open){ flash = {sel, text}; open(); flash = null; }
 function openDrawer(html){
-  if(drawerGuard && !drawerGuard()) return false;
+  if(!drawerCanClose()) return false;
   resetDrawerHooks();
   const d = $("#drawer"); d.innerHTML = `<button class="btn small close" id="closeD">Close</button>` + html;
   d.classList.add("open"); d.setAttribute("aria-hidden","false"); $("#drawerBg").classList.add("open");
   $("#closeD").onclick = () => closeDrawer(); $("#closeD").focus();
+  if(flash) setTimeout((f => () => feedback($(f.sel), "ok", f.text))(flash), 0);  // after the caller wires the drawer
   return true;
 }
-function closeDrawer(){ if(drawerGuard && !drawerGuard()) return; forceCloseDrawer(); }
+function closeDrawer(){ if(drawerCanClose()) forceCloseDrawer(); }
 function forceCloseDrawer(){ resetDrawerHooks(); $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden","true"); $("#drawerBg").classList.remove("open"); }
 $("#drawerBg").onclick = closeDrawer;
 document.addEventListener("keydown", e => { if(e.key === "Escape") closeDrawer(); });
@@ -529,11 +638,20 @@ function openListing(lid){
   openDrawer(`${listingHeader(l)}
    <div class="actions">${safeUrl(l.url) ? `<a class="btn" href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener">Open posting</a>` : ""}
     ${saved ? `<button class="btn" id="goItem">Open in apply later</button>` : `<button class="btn primary" id="saveL">Save to apply later</button>`}
-    <button class="btn" id="hideL">Hide this role</button></div>
+    <button class="btn" id="hideL">Hide this role</button><span class="save-status" id="lMsg" role="status" aria-live="polite"></span></div>
    ${matchBlock(lid, l.company, l.title, l.location)}${jdBlock(lid)}`);
-  if($("#saveL")) $("#saveL").onclick = () => { saveListing(lid); openListing(lid); };
+  if($("#saveL")) $("#saveL").onclick = async () => {
+    let id = null;
+    const ok = await runAction($("#saveL"), () => { id = addListingItem(lid); persist(); },
+      {verify: () => storedMatches(s => s.items[id]), out:"#lMsg", ok:"Saved to apply later"});
+    if(ok){ renderGoals(); render(); reopenWith("#lMsg", "Saved to apply later", () => openListing(lid)); }
+  };
   if($("#goItem")) $("#goItem").onclick = () => openItem(saved.id);
-  $("#hideL").onclick = () => { S.hidden[lid] = true; save(); closeDrawer(); render(); };
+  $("#hideL").onclick = async () => {
+    const ok = await runAction($("#hideL"), () => { S.hidden[lid] = true; persist(); },
+      {busy:"Hiding…", ok:"Hidden", verify: () => storedMatches(s => s.hidden[lid]), out:"#lMsg"});
+    if(ok){ await sleep(700); closeDrawer(); render(); }
+  };
   wireMatch(lid, l.company, l.title, l.location, () => openListing(lid)); wireJd(lid);
 }
 
@@ -556,20 +674,36 @@ function openItem(id){
     <label for="fRef">Referral</label><input id="fRef" value="${esc(i.referral||"")}" placeholder="Who referred you, if anyone">
     <label for="fNo">Notes</label><textarea id="fNo" rows="4">${esc(i.notes||"")}</textarea>
    </div>
-   <div class="actions"><button class="btn primary" id="saveI">${isNew ? "Add role" : "Save changes"}</button>${isNew ? "" : `<button class="btn" id="delI">Remove from list</button>`}<span class="note" id="savedNote"></span></div>
+   <div class="actions"><button class="btn primary" id="saveI">${isNew ? "Add role" : "Save changes"}</button>${isNew ? "" : `<button class="btn" id="delI">Remove from list</button>`}<span class="save-status" id="iMsg" role="status" aria-live="polite"></span></div>
+   <p class="note saved-at" id="iAt"></p>
    ${isNew ? "" : `<h3>History</h3><ul class="hist">${(i.history||[]).map(h => `<li>${esc(h.s)}, ${fmt(h.d)}</li>`).join("")}</ul>
      ${matchBlock(key, i.company, i.title, i.location)}${jdBlock(key)}`}`);
-  $("#saveI").onclick = () => {
-    const prev = i.status;
-    Object.assign(i, {company:$("#fCo").value.trim(), title:$("#fTi").value.trim(), location:$("#fLo").value.trim(), url:$("#fUrl").value.trim(),
-      lane:$("#fLane").value, deadline:$("#fDl").value, resumeVersion:$("#fRv").value.trim(), referral:$("#fRef").value.trim(), notes:$("#fNo").value});
-    if(!i.company || !i.title){ $("#savedNote").textContent = "Company and role are required."; return; }
-    const linked = autoLink(i);
-    S.items[i.id] = i; save();
-    const st = $("#fSt").value; if(st !== prev) setStatus(i.id, st); else { renderGoals(); render(); }
-    if(isNew || linked) openItem(i.id); else $("#savedNote").textContent = "Saved.";
+  const form = trackForm(["fCo","fTi","fLo","fUrl","fLane","fSt","fDl","fRv","fRef","fNo"].map(f => $("#" + f)), $("#iMsg"),
+    () => { $("#iAt").textContent = savedAgo(i.savedAt, "Last saved ", isNew ? "Not saved yet" : ""); });
+  $("#saveI").onclick = async () => {
+    let snap, linked = false;
+    const ok = await runAction($("#saveI"), () => {
+      const vals = {company:$("#fCo").value.trim(), title:$("#fTi").value.trim(), location:$("#fLo").value.trim(), url:$("#fUrl").value.trim(),
+        lane:$("#fLane").value, deadline:$("#fDl").value, resumeVersion:$("#fRv").value.trim(), referral:$("#fRef").value.trim(), notes:$("#fNo").value};
+      if(!vals.company || !vals.title) throw new UserError("Company and role are required.");
+      snap = form.read();
+      Object.assign(i, vals); applyStatus(i, $("#fSt").value);
+      linked = autoLink(i);
+      i.savedAt = nowIso(); S.items[i.id] = i;
+      persist();
+    }, {busy: isNew ? "Adding…" : "Saving…", ok: isNew ? "Added" : "Saved", out:"#iMsg", verify: () => storedMatches(s => s.items[i.id])});
+    if(!ok){ if(isNew && snap) delete S.items[i.id]; return; }
+    form.saved(snap); renderGoals(); render();
+    if(isNew || linked) reopenWith("#iMsg", isNew ? "Added" : "Saved", () => openItem(i.id));
+    else if(!l) $("#drawer h2").textContent = i.title;
   };
-  if($("#delI")) $("#delI").onclick = () => { if(confirm("Remove this role from your list?")){ delete S.items[i.id]; save(); closeDrawer(); renderGoals(); render(); } };
+  if($("#delI")) $("#delI").onclick = async () => {
+    if(!confirm("Remove this role from your list?")) return;
+    const ok = await runAction($("#delI"), () => { delete S.items[i.id]; persist(); },
+      {busy:"Removing…", ok:"Removed", out:"#iMsg", verify: () => storedMatches(s => s.items[i.id])});
+    if(!ok){ S.items[i.id] = i; return; }
+    renderGoals(); render(); await sleep(700); forceCloseDrawer();
+  };
   if(!isNew){ wireMatch(key, i.company, i.title, i.location, () => openItem(i.id)); wireJd(key); }
 }
 
@@ -647,13 +781,38 @@ function openContact(id, company=""){
    </div>
    <p class="note">Leave next follow-up blank to set it ${esc(S.settings.followDays)} days after last touch.</p>
    <div class="actions"><button class="btn primary" id="cSave">${id ? "Save changes" : "Add contact"}</button>
-    ${id ? `<button class="btn" id="cTouch">Contacted today</button><button class="btn" id="cDel">Delete</button>` : ""}<span class="note" id="cMsg"></span></div>`);
-  const read = () => Object.assign(c, {name:$("#cN").value.trim(), title:$("#cT").value.trim(), company:$("#cC").value.trim(), met:$("#cM").value.trim(),
-    email:$("#cE").value.trim(), linkedin:$("#cL").value.trim(), last:$("#cLa").value, next:$("#cNx").value || (($("#cLa").value) ? addDays($("#cLa").value, S.settings.followDays) : ""), notes:$("#cNo").value});
-  $("#cSave").onclick = () => { read(); if(!c.name){ $("#cMsg").textContent = "Name is required."; return; }
-    if(!S.contacts.includes(c)) S.contacts.push(c); save(); renderGoals(); render(); openContact(c.id); };
-  if($("#cTouch")) $("#cTouch").onclick = () => { read(); c.last = today(); c.next = addDays(today(), S.settings.followDays); save(); renderGoals(); render(); openContact(c.id); };
-  if($("#cDel")) $("#cDel").onclick = () => { if(confirm("Delete this contact?")){ S.contacts = S.contacts.filter(x => x !== c); save(); closeDrawer(); renderGoals(); render(); } };
+    ${id ? `<button class="btn" id="cTouch">Contacted today</button><button class="btn" id="cDel">Delete</button>` : ""}<span class="save-status" id="cMsg" role="status" aria-live="polite"></span></div>
+   <p class="note saved-at" id="cAt"></p>`);
+  const form = trackForm(["cN","cT","cC","cM","cE","cL","cLa","cNx","cNo"].map(f => $("#" + f)), $("#cMsg"),
+    () => { $("#cAt").textContent = savedAgo(c.savedAt, "Last saved ", id ? "" : "Not saved yet"); });
+  const read = () => {
+    const v = {name:$("#cN").value.trim(), title:$("#cT").value.trim(), company:$("#cC").value.trim(), met:$("#cM").value.trim(),
+      email:$("#cE").value.trim(), linkedin:$("#cL").value.trim(), last:$("#cLa").value, next:$("#cNx").value || (($("#cLa").value) ? addDays($("#cLa").value, S.settings.followDays) : ""), notes:$("#cNo").value};
+    if(!v.name) throw new UserError("Name is required.");
+    Object.assign(c, v);
+  };
+  const saveContact = (btn, change, msg, busy) => runAction(btn, () => {
+    read(); change();
+    c.savedAt = nowIso(); if(!S.contacts.includes(c)) S.contacts.push(c);
+    persist();
+  }, {busy, ok:msg, out:"#cMsg", verify: () => storedMatches(s => (s.contacts || []).find(x => x.id === c.id))});
+  $("#cSave").onclick = async () => {
+    const msg = id ? "Saved" : "Added";
+    if(await saveContact($("#cSave"), () => {}, msg, id ? "Saving…" : "Adding…")){ form.saved(); renderGoals(); render(); reopenWith("#cMsg", msg, () => openContact(c.id)); }
+  };
+  if($("#cTouch")) $("#cTouch").onclick = async () => {
+    if(await saveContact($("#cTouch"), () => { c.last = today(); c.next = addDays(today(), S.settings.followDays); }, "Logged today's contact", "Saving…")){
+      form.saved(); renderGoals(); render(); reopenWith("#cMsg", "Logged today's contact", () => openContact(c.id));
+    }
+  };
+  if($("#cDel")) $("#cDel").onclick = async () => {
+    if(!confirm("Delete this contact?")) return;
+    const before = S.contacts;
+    const ok = await runAction($("#cDel"), () => { S.contacts = S.contacts.filter(x => x !== c); persist(); },
+      {busy:"Deleting…", ok:"Deleted", out:"#cMsg", verify: () => storedMatches(s => (s.contacts || []).find(x => x.id === c.id))});
+    if(!ok){ S.contacts = before; return; }
+    renderGoals(); render(); await sleep(700); forceCloseDrawer();
+  };
 }
 
 /* ---------- feeds status ---------- */
@@ -688,63 +847,46 @@ function openSettings(){
    <div class="actions"><button class="btn primary" id="sSave">Save settings</button><span class="save-status" id="sMsg" role="status" aria-live="polite"></span></div>
    <p class="note saved-at" id="sAt"></p>
    <h3>Calendar</h3><p class="note">Exports deadlines only. In Google Calendar, create a calendar named Internships, then import this file into it so you can hide it anytime.</p>
-   <div class="actions"><button class="btn" id="ics">Download deadlines (.ics)</button></div>
+   <div class="actions"><button class="btn" id="ics">Download deadlines (.ics)</button><span class="save-status" id="icsMsg" role="status" aria-live="polite"></span></div>
    <h3>Backup</h3><p class="note">Browser data disappears if site data is cleared. Back up weekly.</p>
-   <div class="actions"><button class="btn" id="exp2">Download backup</button><button class="btn" id="imp">Restore from backup</button></div>`)) return;
+   <div class="actions"><button class="btn" id="exp2">Download backup</button><button class="btn" id="imp">Restore from backup</button><span class="save-status" id="bkMsg" role="status" aria-live="polite"></span></div>`)) return;
   $("#sModel").value = st.model; if(!$("#sModel").value) $("#sModel").selectedIndex = 0;
   const FIELDS = ["sKey","sModel","sProfile","sResume","sPlanned","gP1","gP1By","gAll","gAllBy","sFu"];
-  const formNow = () => FIELDS.map(id => $("#" + id).value);
-  let baseline = formNow();
-  const isDirty = () => formNow().some((v, k) => v !== baseline[k]);
-  const status = (cls, html) => { const m = $("#sMsg"); m.className = "save-status " + cls; m.innerHTML = html; };
-  const refreshDirty = () => {
-    if(isDirty()) status("dirty", "Unsaved changes");
-    else if($("#sMsg").classList.contains("dirty")) status("", "");
-  };
-  const showAt = () => { $("#sAt").textContent = savedAgo(st.savedAt); };
-  $("#sForm").oninput = $("#sForm").onchange = refreshDirty;
-  showAt();
-  const timer = setInterval(showAt, 30000);
-  drawerCleanup = () => clearInterval(timer);
-  drawerGuard = () => !isDirty() || confirm("You have unsaved settings changes. Close without saving?");
+  const form = trackForm(FIELDS.map(id => $("#" + id)), $("#sMsg"), () => { $("#sAt").textContent = savedAgo(st.savedAt); });
 
   // Reads storage back and compares every setting with the form. Never shows or logs the API key.
   const verify = () => {
-    const raw = localStorage.getItem(KEY);
-    if(raw === null) return "nothing was stored";
-    const saved = (JSON.parse(raw) || {}).settings || {}, sg = saved.goals || {};
-    const want = [["apiKey", saved.apiKey, $("#sKey").value], ["model", saved.model, $("#sModel").value],
+    let saved;
+    try{ const raw = localStorage.getItem(KEY); if(raw === null) return "nothing was stored"; saved = (JSON.parse(raw) || {}).settings || {}; }
+    catch(e){ return "couldn't read it back"; }
+    const sg = saved.goals || {};
+    const want = [["API key", saved.apiKey, $("#sKey").value], ["model", saved.model, $("#sModel").value],
       ["About you", saved.profile, $("#sProfile").value], ["resume", saved.resume, $("#sResume").value],
       ["planned work", saved.planned, $("#sPlanned").value], ["follow-up days", saved.followDays, +$("#sFu").value],
       ["P1 goal", sg.p1, +$("#gP1").value], ["P1 date", sg.p1By, $("#gP1By").value],
       ["applications goal", sg.all, +$("#gAll").value], ["applications date", sg.allBy, $("#gAllBy").value],
       ["save time", saved.savedAt, st.savedAt]];
     const bad = want.find(([, a, b]) => a !== b);
-    return bad ? `stored ${bad[0] === "apiKey" ? "API key" : bad[0]} doesn't match` : null;
+    return bad ? `stored ${bad[0]} doesn't match` : null;
   };
   $("#sSave").onclick = async () => {
-    const btn = $("#sSave"), t0 = performance.now(), prevAt = st.savedAt;
-    btn.disabled = true; btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>Saving…`; status("", "");
-    let err = null, snap = null;
-    try{
+    const prevAt = st.savedAt; let snap;
+    const ok = await runAction($("#sSave"), () => {
       Object.assign(st, {apiKey:$("#sKey").value.trim(), model:$("#sModel").value, profile:$("#sProfile").value, resume:$("#sResume").value, planned:$("#sPlanned").value,
         followDays:Math.min(365, Math.max(3, Math.round(+$("#sFu").value) || 14))});
       Object.assign(g, {p1:Math.min(200, Math.round(+$("#gP1").value) || 15), p1By:$("#gP1By").value, all:Math.min(200, Math.round(+$("#gAll").value) || 40), allBy:$("#gAllBy").value});
       // show the cleaned-up values, so the form matches what gets stored
       $("#sKey").value = st.apiKey; $("#sFu").value = st.followDays; $("#gP1").value = g.p1; $("#gAll").value = g.all;
-      snap = formNow();
-      st.savedAt = new Date().toISOString();
+      snap = form.read();
+      st.savedAt = nowIso();
       persist();
-      err = verify();
-    }catch(e){ err = storageError(e); }
-    if(err) st.savedAt = prevAt;
-    await new Promise(r => setTimeout(r, Math.max(0, 400 - (performance.now() - t0))));  // keep the spinner visible
-    btn.disabled = false; btn.textContent = "Save settings";
-    if(err){ status("bad", ICON_X + esc("Save failed: " + err)); }
-    else{ baseline = snap; status("ok", ICON_CHECK + "Saved"); refreshDirty(); renderGoals(); render(); }
-    showAt();
+    }, {verify, out:"#sMsg"});
+    if(ok){ form.saved(snap); renderGoals(); render(); }
+    else{ st.savedAt = prevAt; $("#sAt").textContent = savedAgo(st.savedAt); }
   };
-  $("#ics").onclick = exportIcs; $("#exp2").onclick = exportBackup; $("#imp").onclick = () => $("#importFile").click();
+  $("#ics").onclick = () => runAction($("#ics"), exportIcs, {busy:"Preparing…", ok:"Downloaded", fail:"", out:"#icsMsg", fade:3000});
+  $("#exp2").onclick = () => runAction($("#exp2"), exportBackup, {busy:"Preparing…", ok:"Downloaded", fail:"", out:"#bkMsg", fade:3000});
+  $("#imp").onclick = () => $("#importFile").click();
 }
 function download(name, text, type){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
 function exportBackup(){ const copy = JSON.parse(JSON.stringify(S)); copy.settings.apiKey = ""; download(`internship-backup-${today()}.json`, JSON.stringify(copy, null, 1), "application/json"); }
@@ -752,7 +894,7 @@ function exportIcs(){
   const ev = Object.values(S.items).filter(i => /^\d{4}-\d{2}-\d{2}$/.test(i.deadline || "") && i.status === "Saved");
   const text = s => String(s ?? "").replace(/[\\;,]/g, m => "\\" + m).replace(/\r\n|\r|\n/g, "\\n");  // RFC 5545 TEXT
   const line = s => String(s ?? "").replace(/[\r\n]+/g, "");
-  if(!ev.length){ alert("No saved roles have deadlines yet."); return; }
+  if(!ev.length) throw new UserError("No saved roles have deadlines yet.");
   const d = s => s.replace(/-/g,""), stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15) + "Z";
   const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//s27dash//EN","X-WR-CALNAME:Internships"];
   ev.forEach(i => lines.push("BEGIN:VEVENT", `UID:${line(i.id)}@s27dash`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d(i.deadline)}`, `DTEND;VALUE=DATE:${d(addDays(i.deadline,1))}`,
@@ -761,14 +903,25 @@ function exportIcs(){
   download("internship-deadlines.ics", lines.filter(Boolean).join("\r\n"), "text/calendar");
 }
 $("#importFile").onchange = async e => {
-  const f = e.target.files[0]; if(!f) return;
-  try{ const data = JSON.parse(await f.text()); if(!data.items) throw new Error("Not a backup file.");
-    const key = S.settings.apiKey; S = normalize(data); S.settings.apiKey = key || S.settings.apiKey; save(); renderGoals(); render(); forceCloseDrawer(); alert("Backup restored."); }
-  catch(err){ alert("Restore failed: " + err.message); }
-  e.target.value = "";
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  const btn = $("#imp"); if(!btn) return;
+  let before = null;
+  const ok = await runAction(btn, async () => {
+    let data;
+    try{ data = JSON.parse(await f.text()); }catch(x){ throw new UserError("Restore failed: that file isn't valid JSON."); }
+    if(!data || typeof data !== "object" || !data.items) throw new UserError("Restore failed: not a dashboard backup file.");
+    before = S;
+    const key = S.settings.apiKey; S = normalize(data); S.settings.apiKey = key || S.settings.apiKey;
+    persist();
+    return `Restored ${Object.keys(S.items).length} roles, ${S.contacts.length} contacts, ${Object.keys(S.analyses).length} matches`;
+  }, {busy:"Restoring…", fail:"Restore failed: ", out:"#bkMsg", verify: () => storedMatches(s => s)});
+  if(!ok){ if(before) S = before; return; }
+  const msg = $("#bkMsg").textContent;
+  renderGoals(); render(); resetDrawerHooks();  // the open Settings form is stale now
+  reopenWith("#bkMsg", msg, openSettings);
 };
 $("#settingsBtn").onclick = openSettings;
-$("#exportBtn").onclick = exportBackup;
+$("#exportBtn").onclick = () => runAction($("#exportBtn"), exportBackup, {busy:"Preparing…", ok:"Downloaded", fail:"", out:"#hdrMsg", fade:3000});
 
 boot();
 </script>

@@ -25,6 +25,7 @@ def jget(url, **kw):
 
 def strip_html(s):
     s = html.unescape(s or "")
+    s = re.sub(r"<(script|style)\b[^>]*>.*?</\1\s*>", " ", s, flags=re.I | re.S)
     s = re.sub(r"<(br|/p|/li|/div|/h\d)[^>]*>", "\n", s, flags=re.I)
     s = re.sub(r"<[^>]+>", " ", s)
     s = html.unescape(s)
