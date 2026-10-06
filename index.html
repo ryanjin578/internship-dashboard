@@ -112,6 +112,15 @@ textarea{resize:vertical}
 .match .pct span{display:block;font-size:13px;font-weight:400;color:var(--muted);font-stretch:100%}
 .match ul{margin:6px 0 0;padding-left:18px}
 .match li{margin-bottom:6px}
+.match .flagline{margin:0 0 6px;font-size:13px}
+.reqs{overflow-x:auto;margin:8px 0}
+.reqs table{font-size:13px}
+.reqs th,.reqs td{padding:6px 6px}
+.reqs .ev{color:var(--muted);font-style:italic}
+.st{white-space:nowrap;font-weight:600}
+.st.met{color:var(--accent)}.st.partial{color:var(--amber)}.st.missing{color:var(--red)}
+.mk{display:inline-block;font-size:11px;padding:0 5px;border-radius:8px;margin-left:4px;background:var(--amber-soft);color:var(--amber);vertical-align:1px}
+.mk.bad{background:var(--red-soft);color:var(--red)}
 .err{color:var(--red);font-size:14px}
 .spinner{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-1px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;opacity:.85;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -199,6 +208,8 @@ function normalize(s){
     if(!a || typeof a !== "object") continue;
     a.current = num(a.current, 0, 100); a.projected = num(a.projected, 0, 100);
     for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
+    if(a.requirements !== undefined && !Array.isArray(a.requirements)) delete a.requirements;  // shows as old scoring
+    if(a.requirements) a.requirements = a.requirements.filter(r => r && typeof r === "object");
   }
   return o;
 }
@@ -428,7 +439,7 @@ function itemRow(i){
      <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
     <td><select class="status-select" data-status="${esc(i.id)}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
-    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong><div class="sub">${esc(a.projected)}% projected</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
+    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong>${matchMarkers(a)}<div class="sub">${a.requirements ? esc(a.projected) + "% projected" : "Old scoring: match again"}</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
 }
 /* Board dropdown: save, read back, then a small ✓ (or ✗ with the reason on hover) next to the select. */
 function setStatus(id, s){
@@ -516,18 +527,72 @@ function quickFit(jd){
 }
 
 /* ---------- Claude match (on click, uses your API key) ---------- */
-const SYS = `You assess how well one specific student fits one internship posting. Be honest and calibrated; never inflate. "current" scores fit using only finished work on the resume. "projected" scores fit if the planned work is completed by application review. Eligibility: flag class-standing, graduation-year, GPA, degree, or citizenship rules the student fails or may fail.
+/* Claude extracts and assesses requirements; scoreMatch() checks the quotes and computes the %. */
+const SYS = `You assess how well one specific student fits one internship posting. Be honest and calibrated; never inflate. You do not score: code computes the score from your requirement list.
+Requirements: 4-15 items, deduplicated, only things the posting actually asks for. Boilerplate it lists (e.g. "team player") is fine; never invent items. One item per distinct ask.
+- kind: "preferred" if the posting calls it preferred, nice to have, a plus, ideally, bonus, or desired; every other listed qualification is "required".
+- gate: true only for eligibility rules (degree level or field, graduation year, citizenship, class standing, GPA floor, work authorization, enrollment). Skills and experience are never gates.
+- now: status using only STUDENT and RESUME (finished work). met = clearly shown; partial = related but weaker (coursework instead of experience, adjacent tool, less than asked); missing = not shown.
+- now_evidence: an exact verbatim quote (5-25 words, copied character for character) from STUDENT or RESUME that supports the status, or "" when missing. Code checks every quote; a paraphrase counts as missing.
+- planned: status if the PLANNED WORK is finished. Never lower than now.
+- planned_evidence: exact verbatim quote from STUDENT, RESUME, or PLANNED WORK, or "" when missing.
+eligible: "no" if a gate is clearly failed, "unclear" if a gate can't be confirmed, otherwise "yes" or "likely".
 Reply with ONLY a JSON object, no prose, no code fences:
-{"current":0-100,"projected":0-100,"eligible":"yes|likely|unclear|no","eligibility_note":"one sentence","verdict":"one sentence: apply now, apply after X, or skip, and why","strengths":["max 3, short"],"gaps":[{"gap":"short","fix":"one concrete action, preferably a specific item from the planned work, with what to show on the resume"}],"keywords":["max 8 JD terms he can truthfully mirror"]}`;
+{"requirements":[{"text":"short restatement of the ask","kind":"required|preferred","gate":false,"now":"met|partial|missing","now_evidence":"","planned":"met|partial|missing","planned_evidence":""}],"eligible":"yes|likely|unclear|no","eligibility_note":"one sentence","verdict":"one sentence: apply now, apply after X, or skip, and why","strengths":["max 3, short"],"gaps":[{"gap":"short","fix":"one concrete action, preferably a specific item from the planned work, with what to show on the resume"}],"keywords":["max 8 posting terms the student can truthfully mirror"]}`;
+const STATUS_VAL = {met:1, partial:0.5, missing:0};
+const normText = s => String(s || "").toLowerCase().replace(/[^a-z0-9+#]+/g, " ").trim();
+/* Quote check: normalized evidence must appear in the normalized source, on word boundaries. */
+const quoted = (ev, src) => { const q = normText(ev); return q.length > 0 && src.includes(" " + q + " "); };
+/* Verify quotes, dedupe, and compute the score in code. Gates never count toward the %. */
+function scoreMatch(a, st){
+  const now = " " + normText(st.profile + "\n" + st.resume) + " ";
+  const later = " " + normText(st.profile + "\n" + st.resume + "\n" + st.planned) + " ";
+  const seen = new Set(), reqs = [];
+  for(const r of Array.isArray(a.requirements) ? a.requirements : []){
+    if(!r || typeof r !== "object" || typeof r.text !== "string" || !r.text.trim()) continue;
+    const k = normText(r.text); if(seen.has(k)) continue; seen.add(k);
+    const q = {text:r.text.trim().slice(0, 200), kind:r.kind === "preferred" ? "preferred" : "required", gate:r.gate === true};
+    for(const [f, src] of [["now", now], ["planned", later]]){
+      q[f] = STATUS_VAL[r[f]] !== undefined ? r[f] : "missing";
+      q[f + "_evidence"] = typeof r[f + "_evidence"] === "string" ? r[f + "_evidence"].trim().slice(0, 400) : "";
+      if(q[f] !== "missing" && !quoted(q[f + "_evidence"], src)){ q[f] = "missing"; q[f + "_unverified"] = true; }
+    }
+    if(STATUS_VAL[q.planned] < STATUS_VAL[q.now]){ q.planned = q.now; q.planned_evidence = q.now_evidence; delete q.planned_unverified; }
+    reqs.push(q);
+  }
+  a.requirements = reqs.slice(0, 15);
+  const scored = a.requirements.filter(r => !r.gate);
+  const pct = f => { let got = 0, of = 0;
+    for(const r of scored){ const w = r.kind === "required" ? 2 : 1; of += w; got += w * STATUS_VAL[r[f]]; }
+    return of ? Math.round(100 * got / of) : 0; };
+  a.current = pct("now"); a.projected = Math.max(a.current, pct("planned"));
+  a.lowConfidence = scored.length < 4;
+  a.gateFails = a.requirements.filter(r => r.gate && r.now === "missing").map(r => r.text);
+  if(!["yes","likely","unclear","no"].includes(a.eligible)) a.eligible = "unclear";
+  if(a.gateFails.length && a.eligible !== "no") a.eligible = "unclear";
+  return a;
+}
+/* "Required 5/7 met, preferred 2/4" for one status field. */
+function reqTally(a, f){
+  const c = kind => { const rs = a.requirements.filter(r => !r.gate && r.kind === kind); return `${rs.filter(r => r[f] === "met").length}/${rs.length}`; };
+  return `Required ${c("required")} met, preferred ${c("preferred")}`;
+}
+function matchMarkers(a){
+  if(!a.requirements) return "";
+  return (a.gateFails && a.gateFails.length || a.eligible === "no" ? `<span class="mk bad" title="Eligibility: ${esc(a.eligible)}">gate</span>` : "")
+    + (a.lowConfidence ? `<span class="mk" title="Fewer than 4 scored requirements">low conf.</span>` : "");
+}
 function analysisFor(i){ return S.analyses[i.lid || i.id]; }
 function jdFor(key){ const l = listingById(key); return (l && l.desc) || S.jds[key] || ""; }
 class RetryableReply extends Error {}  // cut off or unparseable: worth one automatic retry
 /* Sonnet 5.5 thinks by default and thinking counts toward max_tokens, so the first try keeps it
-   at low effort and the retry turns it off (between_tools is Sonnet 5.5 only) so the JSON always fits. */
+   at low effort and the retry turns it off (between_tools is Sonnet 5.5 only) so the JSON always fits.
+   Sonnet 5.5 rejects a non-default temperature, so temperature 0 applies to the other models. */
 function matchBody(model, prompt, retry){
-  const b = {model, max_tokens:4000, system:SYS, messages:[{role:"user", content:prompt}]};
+  const b = {model, max_tokens:6000, system:SYS, messages:[{role:"user", content:prompt}]};
   if(model.startsWith("claude-sonnet-5-5"))
     Object.assign(b, retry ? {thinking:{type:"between_tools"}} : {thinking:{type:"adaptive"}, output_config:{effort:"low"}});
+  else b.temperature = 0;
   return b;
 }
 /* First balanced {...} in text that parses, skipping braces inside strings. */
@@ -552,7 +617,8 @@ async function matchRequest(st, prompt, retry){
   const d = await r.json();
   if(d.stop_reason === "refusal") throw new Error("Claude declined" + (d.stop_details?.explanation ? `: ${d.stop_details.explanation}` : "."));
   const a = firstJsonObject((d.content || []).filter(b => b.type === "text").map(b => b.text).join(""));
-  if(a) return a;
+  if(a && Array.isArray(a.requirements)) return a;
+  if(a) throw new RetryableReply("Claude's reply had no requirements list. Try again.");
   if(d.stop_reason === "max_tokens") throw new RetryableReply("Reply cut off (max_tokens). Try again.");
   throw new RetryableReply("Invalid JSON in Claude's reply. Try again.");
 }
@@ -567,7 +633,7 @@ async function claudeMatch(key, company, title, location){
   try{ a = await matchRequest(st, prompt, false); }
   catch(e){ if(!(e instanceof RetryableReply)) throw e; a = await matchRequest(st, prompt, true); }
   a.at = today(); a.model = st.model;
-  a.current = Math.round(Number(a.current)) || 0; a.projected = Math.round(Number(a.projected)) || 0;
+  scoreMatch(a, st);
   for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
   S.analyses[key] = a; save(); return a;
 }
@@ -596,13 +662,25 @@ function matchBlock(key, company, title, location){
   const a = S.analyses[key], q = quickFit(jdFor(key));
   return `<h3>Fit</h3>
    ${q ? `<p class="note">Keyword fit: ${q.hit} of ${q.of} posting terms appear in your resume or plan.${q.missing.length ? " Missing: " + esc(q.missing.slice(0,8).join(", ")) + "." : ""}</p>` : ""}
-   ${a ? `<div class="match"><div class="pct"><div>${esc(a.current)}%<span>Now</span></div><div>${esc(a.projected)}%<span>After planned work</span></div><div style="font-size:18px;align-self:center">${esc(a.eligible)}<span>Eligible</span></div></div>
+   ${a ? `<div class="match">${a.requirements ? "" : `<p class="flagline err">Old scoring: match again.</p>`}
+     <div class="pct"><div>${esc(a.current)}%<span>Now</span></div><div>${esc(a.projected)}%<span>After planned work</span></div><div style="font-size:18px;align-self:center"${a.gateFails && a.gateFails.length || a.eligible === "no" ? ` class="err"` : ""}>${esc(a.eligible)}<span>Eligible</span></div></div>
+     ${a.gateFails && a.gateFails.length ? `<p class="flagline err">Eligibility not shown: ${esc(a.gateFails.join("; "))}. Not counted in the %.</p>` : ""}
+     ${a.lowConfidence ? `<p class="flagline" style="color:var(--amber)">Low confidence: fewer than 4 scored requirements.</p>` : ""}
+     ${a.requirements ? reqTable(a) : ""}
      <p><strong>${esc(a.verdict)}</strong></p><p class="note">${esc(a.eligibility_note)}</p>
      ${a.strengths?.length ? `<h3>Strengths</h3><ul>${a.strengths.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
      ${a.gaps?.length ? `<h3>Gaps and the fix</h3><ul>${a.gaps.map(g => `<li><strong>${esc(g.gap)}</strong><br>${esc(g.fix)}</li>`).join("")}</ul>` : ""}
      ${a.keywords?.length ? `<h3>Words to mirror</h3><p>${a.keywords.map(k => `<span class="chip">${esc(k)}</span>`).join("")}</p>` : ""}
      <p class="note">Matched ${fmt(a.at)} with ${esc(a.model)}.</p></div>` : ""}
    <div class="actions"><button class="btn primary" id="matchBtn">${a ? "Match again" : "Match with Claude"}</button><span class="save-status" id="matchMsg" role="status" aria-live="polite"></span></div>`;
+}
+function reqTable(a){
+  const st = (r, f) => `<span class="st ${esc(r[f])}">${esc(r[f])}</span>${r[f + "_unverified"] ? `<span class="mk bad" title="Claude's quote wasn't found in your text, so this counts as missing">unverified</span>` : ""}`;
+  const ev = r => [r.now_evidence && `“${esc(r.now_evidence)}”`, r.planned_evidence && r.planned_evidence !== r.now_evidence && `Plan: “${esc(r.planned_evidence)}”`].filter(Boolean).join("<br>");
+  return `<p class="note"><strong>${esc(reqTally(a, "now"))}</strong>. After planned work: ${esc(reqTally(a, "planned").replace(/^R/, "r"))}.</p>
+   <div class="reqs"><table><thead><tr><th>Requirement</th><th>Type</th><th>Now</th><th>Planned</th><th>Evidence</th></tr></thead><tbody>
+   ${a.requirements.map(r => `<tr><td>${esc(r.text)}</td><td>${r.gate ? "Gate" : r.kind === "preferred" ? "Preferred" : "Required"}</td>
+     <td>${st(r, "now")}</td><td>${st(r, "planned")}</td><td class="ev">${ev(r)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function wireMatch(key, company, title, location, after){
   const b = $("#matchBtn"); if(!b) return;
