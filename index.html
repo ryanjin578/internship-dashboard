@@ -291,7 +291,7 @@ function itemRow(i){
      <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
     <td><select class="status-select" data-status="${i.id}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
-    <td>${due}</td><td>${a ? `<strong>${a.current}%</strong><div class="sub">${a.projected}% projected</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
+    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong><div class="sub">${esc(a.projected)}% projected</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
 }
 function setStatus(id, s){
   const i = S.items[id]; if(!i || i.status === s) return;
@@ -389,6 +389,7 @@ async function claudeMatch(key, company, title, location){
   const m = txt.replace(/```json|```/g,"").match(/\{[\s\S]*\}/);
   if(!m) throw new Error("Claude's reply was not JSON. Try again.");
   const a = JSON.parse(m[0]); a.at = today(); a.model = st.model;
+  a.current = Math.round(Number(a.current)) || 0; a.projected = Math.round(Number(a.projected)) || 0;
   S.analyses[key] = a; save(); return a;
 }
 async function matchAll(){
@@ -406,7 +407,7 @@ function matchBlock(key, company, title, location){
   const a = S.analyses[key], q = quickFit(jdFor(key));
   return `<h3>Fit</h3>
    ${q ? `<p class="note">Keyword fit: ${q.hit} of ${q.of} posting terms appear in your resume or plan.${q.missing.length ? " Missing: " + esc(q.missing.slice(0,8).join(", ")) + "." : ""}</p>` : ""}
-   ${a ? `<div class="match"><div class="pct"><div>${a.current}%<span>Now</span></div><div>${a.projected}%<span>After planned work</span></div><div style="font-size:18px;align-self:center">${esc(a.eligible)}<span>Eligible</span></div></div>
+   ${a ? `<div class="match"><div class="pct"><div>${esc(a.current)}%<span>Now</span></div><div>${esc(a.projected)}%<span>After planned work</span></div><div style="font-size:18px;align-self:center">${esc(a.eligible)}<span>Eligible</span></div></div>
      <p><strong>${esc(a.verdict)}</strong></p><p class="note">${esc(a.eligibility_note)}</p>
      ${a.strengths?.length ? `<h3>Strengths</h3><ul>${a.strengths.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
      ${a.gaps?.length ? `<h3>Gaps and the fix</h3><ul>${a.gaps.map(g => `<li><strong>${esc(g.gap)}</strong><br>${esc(g.fix)}</li>`).join("")}</ul>` : ""}
