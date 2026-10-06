@@ -168,7 +168,7 @@ const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, analyse
 let S = load();
 let L = {listings:[], generated_at:null}, SRC = {sources:[]}, CO = [];
 let prevVisit = S.lastVisit;
-const ui = {tab:"board", feed:{q:"", lanes:new Set(["sales","swe","hw"]), bay:false, tier:false, clean:false, fresh:false, coop:"all", limit:60},
+const ui = {tab:"board", feed:{q:"", lanes:new Set(["sales"]), bay:false, tier:false, clean:false, fresh:false, coop:"all", limit:60},
   co:{q:"", open:false}, sortItems:"urgency"};
 
 function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s){ const b = blank(); return {...b, ...s, settings:{...b.settings, ...s.settings, goals:{...b.settings.goals, ...(s.settings||{}).goals}}}; } }catch(e){} return blank(); }

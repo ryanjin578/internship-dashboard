@@ -11,11 +11,13 @@ import re
 import sys
 import time
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import (BAY, ECE_SALES, NOT_ECE, SEMI_NAME, DEFENSE, INTERN, OFFTRACK, ROOT, SENIOR, CompanyIndex, eligibility, http, is_us,
+from common import (BAY, ECE_SALES, NOT_ECE, SEMI_NAME, STATES, grad_only, needs_clearance, DEFENSE, INTERN, OFFTRACK, ROOT, SENIOR, CompanyIndex, eligibility, http, is_us,
                     jget, lane_of, norm, strip_html, term_of)
 
 NOW = dt.datetime.now(dt.timezone.utc)
@@ -85,13 +87,29 @@ def a_oracle(s):
 
 
 def a_eightfold(s):
-    rows = []
+    """Eightfold's newer pcsx search API (the old /api/apply/v2/jobs now returns 403). Pages are 10 rows."""
+    base = f"https://{s['host']}/api/pcsx"
+    rows, seen = [], set()
     for q in QUERIES:
-        d = jget(f"https://{s['host']}/api/apply/v2/jobs?domain={s['domain']}&query={quote(q)}&start=0&num=100")
-        for j in d.get("positions", []):
-            rows.append({"title": j.get("name", ""), "location": j.get("location", ""),
-                         "url": j.get("canonicalPositionUrl") or f"https://{s['host']}/careers/job/{j.get('id')}",
-                         "desc": strip_html(j.get("job_description", ""))})
+        start = 0
+        while True:
+            d = jget(f"{base}/search?domain={s['domain']}&query={quote(q)}&location=&start={start}&sort_by=relevance").get("data") or {}
+            posts = d.get("positions", [])
+            for j in posts:
+                if j["id"] in seen:
+                    continue
+                seen.add(j["id"])
+                std = j.get("standardizedLocations") or []  # "Tualatin, OR, US": ends in a country code
+                us = [l for l in std if l.split(",")[-1].strip() == "US"]
+                if std and not us:
+                    continue
+                rows.append({"title": j.get("name", ""), "location": "; ".join(us or j.get("locations") or []),
+                             "url": f"https://{s['host']}{j.get('positionUrl') or '/careers/job/' + str(j['id'])}",
+                             "detail": ["eightfold", f"{base}/position_details?position_id={j['id']}&domain={s['domain']}&hl=en"]})
+            start += len(posts)
+            if not posts or start >= min(d.get("count") or 0, 300):
+                break
+            time.sleep(0.3)
     return rows
 
 
@@ -102,7 +120,7 @@ def a_ashby(s):
 
 
 def a_lever(s):
-    d = jget(f"https://api.lever.co/v0/postings/{s['company']}?mode=json")
+    d = jget(f"https://{s.get('api', 'api.lever.co')}/v0/postings/{s['company']}?mode=json")  # EU boards: "api": "api.eu.lever.co"
     return [{"title": j.get("text", ""), "location": (j.get("categories") or {}).get("location", ""),
              "url": j.get("hostedUrl", ""), "desc": j.get("descriptionPlain", "")} for j in d]
 
@@ -120,24 +138,148 @@ def a_jibe(s):
     return rows
 
 
-def a_successfactors(s):
-    rows = []
+def _foreign_code(loc):
+    """SuccessFactors 'City, ST, US, zip' style: 'Munich, DE, 81829' or 'Penang, MY, MYS' is foreign
+    (DE would otherwise pass as Delaware). 'Fremont, CA' with no country is kept."""
+    parts = [p.strip() for p in loc.split(",") if p.strip()]
+    if any(p in ("US", "USA") for p in parts):
+        return False
+    codes = [p for p in parts[1:] if re.fullmatch(r"[A-Z]{2,3}", p)]
+    return bool(codes) and (len(parts) >= 3 or any(c not in STATES for c in codes))
+
+
+def _sf_rss(s):
+    """Older SuccessFactors sites: RSS feed, capped at ~20 items per query."""
+    rows, seen = [], set()
     for q in QUERIES:
         xml = http(f"https://{s['host']}/services/rss/job/?locale=en_US&keywords=({quote(q)})")
         for it in ET.fromstring(xml).iter("item"):
-            title = it.findtext("title") or ""
+            title, link = it.findtext("title") or "", it.findtext("link") or ""
+            if link in seen:
+                continue
+            seen.add(link)
             loc = ""
-            m = re.search(r"\(([^()]*,\s*[A-Z]{2}[^()]*)\)\s*$", title)
+            m = re.search(r"\(([^()]*,\s*[A-Z]{2}[^()]*)\)\s*$", title)  # "(Greensboro, NC, US, 27409)"
+            d = re.search(r"\(([A-Za-z .]+(?: - [^()]+)+)\)\s*$", title)  # "(US - MA - Waltham)", "(Malaysia - Penang)"
             if m:
-                loc = m.group(1)
-            rows.append({"title": title, "location": loc, "url": it.findtext("link") or "",
+                loc, title = m.group(1), title[:m.start()].strip()
+            elif d:
+                parts = [p.strip() for p in d.group(1).split(" - ")]
+                if parts[0] not in ("US", "USA", "United States"):
+                    continue
+                loc, title = ", ".join(reversed(parts[1:])), title[:d.start()].strip()
+            if _foreign_code(loc):
+                continue
+            rows.append({"title": title, "location": loc, "url": link,
                          "desc": strip_html(it.findtext("description") or "")})
+    return rows
+
+
+def a_successfactors(s):
+    """SuccessFactors career sites: the site's search API (10 per page); falls back to RSS where it's locked."""
+    rows, seen = [], set()
+    try:
+        for q in QUERIES:
+            page = 0
+            while True:
+                d = jget(f"https://{s['host']}/services/recruiting/v1/jobs",
+                         data={"locale": "en_US", "pageNumber": page, "sortBy": "", "keywords": q, "location": "",
+                               "facetFilters": {}, "brand": "", "skills": [], "categoryId": 0, "alertId": "", "rcmCandidateId": ""})
+                res = d.get("jobSearchResult") or []
+                for x in res:
+                    j = x.get("response") or {}
+                    if j.get("id") in seen:
+                        continue
+                    seen.add(j.get("id"))
+                    locs = [l.strip() for l in j.get("jobLocationShort") or [] if l.strip()] or [j.get("primLocation") or ""]
+                    if all(_foreign_code(l) for l in locs):
+                        continue
+                    rows.append({"title": j.get("unifiedStandardTitle", ""), "location": "; ".join(locs),
+                                 "url": f"https://{s['host']}/job/{j.get('urlTitle')}/{j['id']}-en_US"})
+                page += 1
+                if not res or page * 10 >= min(d.get("totalJobs") or 0, 300):
+                    break
+                time.sleep(0.3)
+    except HTTPError as e:
+        if e.code not in (401, 403, 404):
+            raise
+        return _sf_rss(s)
+    return rows
+
+
+def a_talentbrew(s):
+    """Radancy / TalentBrew career sites (careers.synopsys.com, careers.arm.com): results come back as HTML in JSON."""
+    rows, seen = [], set()
+    for q in QUERIES:
+        for page in range(1, 6):
+            h = jget(f"https://{s['host']}/search-jobs/results?ActiveFacetID=0&CurrentPage={page}&RecordsPerPage=100"
+                     f"&Distance=50&RadiusUnitType=0&Keywords={quote(q)}&Location=&ShowRadius=False&IsPagination=False"
+                     f"&FacetType=0&SearchResultsModuleName=Search+Results&SearchFiltersModuleName=Search+Filters"
+                     f"&SortCriteria=0&SortDirection=0&SearchType=5&ResultsType=0",
+                     headers={"X-Requested-With": "XMLHttpRequest"}).get("results", "")
+            new = 0
+            for li in re.split(r"<li\b", h)[1:]:
+                m = re.search(r'<a[^>]+href="(/job/[^"]+)"[^>]*>(.*?)</a>', li, re.S)
+                if not m or m.group(1) in seen:
+                    continue
+                seen.add(m.group(1))
+                new += 1
+                t = re.search(r"<h2[^>]*>(.*?)</h2>", m.group(2), re.S)
+                loc = re.search(r'<span class="[^"]*location[^"]*">(.*?)</span>', li, re.S)
+                rows.append({"title": strip_html(t.group(1) if t else m.group(2)), "location": strip_html(loc.group(1)) if loc else "",
+                             "url": f"https://{s['host']}{m.group(1)}"})
+            pages = re.search(r'data-total-pages="(\d+)"', h)
+            if not new or page >= int(pages.group(1) if pages else 1):
+                break
+            time.sleep(0.3)
+    return rows
+
+
+def a_icims(s):
+    """Classic iCIMS portals (careers-<co>.icims.com). Keyword search is unreliable there, so read every
+    page (20 rows each) and let the filters pick interns. Locations look like 'US-CA-San Jose | IN-KA-Bangalore'."""
+    rows, seen = [], set()
+    for page in range(15):
+        h = http(f"https://{s['host']}/jobs/search?pr={page}&in_iframe=1", headers={"Accept": "text/html"})
+        new = 0
+        for li in h.split('class="iCIMS_JobCardItem"')[1:]:
+            m = re.search(r'href="([^"]+/jobs/\d+/[^"?]+/job)[^"]*"', li)
+            t = re.search(r"<h3[^>]*>(.*?)</h3>", li, re.S)
+            if not m or not t or m.group(1) in seen:
+                continue
+            seen.add(m.group(1))
+            new += 1
+            loc = re.search(r"Job Locations</span>\s*<span[^>]*>(.*?)</span>", li, re.S)
+            locs = [x.strip() for x in strip_html(loc.group(1) if loc else "").split("|") if x.strip()]
+            us = [", ".join(reversed(x.split("-", 2)[1:])) for x in locs if x.startswith("US-")]
+            if locs and not us:
+                continue
+            d = re.search(r'class="col-xs-12 description">(.*?)</div>', li, re.S)
+            rows.append({"title": strip_html(t.group(1)), "location": "; ".join(us), "url": m.group(1),
+                         "desc": strip_html(d.group(1)) if d else ""})
+        if not new:
+            break
+        time.sleep(0.3)
+    return rows
+
+
+def a_jobvite(s):
+    """jobs.jobvite.com/<company>/jobs lists every opening on one page."""
+    h = http(f"https://jobs.jobvite.com/{s['company']}/jobs", headers={"Accept": "text/html"})
+    if "jv-job-list" not in h:  # unknown company slugs still return 200
+        raise ValueError(f"no Jobvite job list for '{s['company']}'")
+    rows = []
+    for m in re.finditer(r'<td class="jv-job-list-name">\s*<a href="([^"]+)">(.*?)</a>\s*</td>\s*'
+                         r'<td class="jv-job-list-location">(.*?)</td>', h, re.S):
+        rows.append({"title": strip_html(m.group(2)), "location": " ".join(strip_html(m.group(3)).split()),
+                     "url": f"https://jobs.jobvite.com{m.group(1)}"})
     return rows
 
 
 ADAPTERS = {"workday": a_workday, "greenhouse": a_greenhouse, "smartrecruiters": a_smartrecruiters,
             "oracle": a_oracle, "eightfold": a_eightfold, "ashby": a_ashby, "lever": a_lever,
-            "jibe": a_jibe, "successfactors": a_successfactors}
+            "jibe": a_jibe, "successfactors": a_successfactors, "talentbrew": a_talentbrew,
+            "icims": a_icims, "jobvite": a_jobvite}
 
 
 def fetch_detail(d):
@@ -150,6 +292,8 @@ def fetch_detail(d):
     if kind == "oracle":
         items = jget(url).get("items", [])
         return strip_html(items[0].get("ExternalDescriptionStr", "") + " " + items[0].get("ExternalQualificationsStr", "")) if items else ""
+    if kind == "eightfold":
+        return strip_html((jget(url).get("data") or {}).get("jobDescription", ""))
     return ""
 
 
@@ -242,12 +386,11 @@ def accept(row, comp_entry, from_repo):
         lane = "hw"
     if lane == "other" or (lane != "sales" and OFFTRACK.search(title)):
         return None
-    if not comp_entry:  # unknown company: keep technical sales, hardware, or anything at a chip-sounding company
-        semi_name = bool(SEMI_NAME.search(company))
-        if lane == "sales" and (not ECE_SALES.search(title) or NOT_ECE.search(title)) and not semi_name:
+    if not comp_entry:  # companies off your list: technical sales / FAE roles only
+        if lane != "sales" or not ECE_SALES.search(title) or NOT_ECE.search(title):
             return None
-        if lane != "sales" and not (row.get("category") == "Hardware" or semi_name):
-            return None
+    if grad_only(title, row.get("desc", ""), row.get("degrees", [])) or needs_clearance(row.get("desc", "")):
+        return None
     coop = bool(re.search(r"\bco-?op\b", title, re.I))
     return {"company": company, "title": title, "location": row.get("location", ""), "url": row.get("url", ""),
             "term": term, "coop": coop, "lane": lane, "desc": (row.get("desc") or "")[:4000],
@@ -292,25 +435,34 @@ def main():
         l.update({"id": lid, "sources": [src_name], "from_repo": from_repo, "inactive": row.get("active") is False})
         current[lid] = l
 
-    # official career sites
+    # official career sites, 8 at a time, with a progress line per feed
     repos_only = "--repos-only" in sys.argv
+    jobs = []
     for c in COMPANIES:
-        if repos_only:
-            break
-        if only and norm(c["name"]) not in only:
+        if repos_only or (only and norm(c["name"]) not in only):
             continue
         for s in c.get("sources", []):
-            name = f"{c['name']}: {s['type']}" + (f" ({s.get('site') or s.get('board') or s.get('company') or s.get('org') or s.get('host')})")
-            t0 = time.time()
-            try:
-                rows = ADAPTERS[s["type"]](s)
-                for r in rows:
-                    add(r, c, name, False)
-                status.append({"name": name, "company": c["name"], "ok": True, "rows": len(rows), "secs": round(time.time() - t0, 1)})
-            except Exception as e:  # one broken site never stops the run
+            label = s.get("site") or s.get("board") or s.get("company") or s.get("org") or s.get("host")
+            jobs.append((c, s, f"{c['name']}: {s['type']} ({label})"))
+
+    def run(job):
+        c, s, name = job
+        t0 = time.time()
+        try:
+            return job, ADAPTERS[s["type"]](s), None, round(time.time() - t0, 1)
+        except Exception as e:  # one broken site never stops the run
+            return job, [], f"{type(e).__name__}: {str(e)[:160]}", round(time.time() - t0, 1)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        for (c, s, name), rows, err, secs in pool.map(run, jobs):
+            print(f"{'ok ' if not err else 'ERR'} {secs:>5}s {len(rows):>4} rows  {name}" + (f"  {err}" if err else ""), flush=True)
+            if err:
                 failed_sources.add(name)
-                status.append({"name": name, "company": c["name"], "ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"})
-            time.sleep(0.5)
+                status.append({"name": name, "company": c["name"], "ok": False, "error": err})
+                continue
+            for r in rows:
+                add(r, c, name, False)
+            status.append({"name": name, "company": c["name"], "ok": True, "rows": len(rows), "secs": secs})
 
     # repos
     if not only:
@@ -320,6 +472,7 @@ def main():
                 for r in rows:
                     add(r, IDX.find(r.get("company", "")), src["name"], True)
                 status.append({"name": src["name"], "company": "", "ok": True, "rows": len(rows)})
+                print(f"ok  {len(rows):>4} rows  {src['name']}", flush=True)
             except Exception as e:
                 failed_sources.add(src["name"])
                 status.append({"name": src["name"], "company": "", "ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"})
@@ -366,13 +519,15 @@ def main():
             continue
         listings.append(old)
 
+    listings = [l for l in listings if (l.get("known") or (l["lane"] == "sales" and ECE_SALES.search(l["title"])))
+                and not grad_only(l["title"], l.get("desc", ""), l.get("degrees", []))
+                and not needs_clearance(l.get("desc", ""))]
     for l in listings:
         l.pop("detail", None)
         l["bay"] = bool(BAY.search(l.get("location", "")))
         l["flags"], l["tags"] = eligibility(l["title"], l.get("desc", ""))
-        if any(d in ("Master's", "PhD", "MBA") for d in l.get("degrees", [])) and "Bachelor's" not in l.get("degrees", []) \
-                and "Grad degree" not in l["flags"]:
-            l["flags"].append("Grad degree")
+        if "Master's" in l.get("degrees", []) or re.search(r"\b(ms|m\.s\.|master'?s)\b", l["title"], re.I):
+            l["tags"].append("BS/MS")
         l["score"] = score(l)
     listings.sort(key=lambda l: (l["status"] != "open", -l["score"], l["company"]))
 

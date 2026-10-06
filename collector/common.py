@@ -8,7 +8,7 @@ UA = {"User-Agent": "Mozilla/5.0 (personal internship dashboard)",
       "Accept": "application/json, text/plain, */*"}
 
 
-def http(url, data=None, headers=None, timeout=30):
+def http(url, data=None, headers=None, timeout=25):
     h = dict(UA)
     h.update(headers or {})
     body = None
@@ -88,9 +88,11 @@ BAY = re.compile(r"\b(san jose|santa clara|sunnyvale|milpitas|mountain view|palo
                  r"san carlos|alameda|bay area|silicon valley)\b", re.I)
 STATES = set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split())
 FOREIGN = re.compile(r"\b(canada|india|china|taiwan|japan|korea|germany|france|united kingdom|england|israel|singapore|"
-                     r"malaysia|philippines|vietnam|mexico|ireland|netherlands|poland|italy|spain|switzerland|austria|"
+                     r"malaysia|philippines|vietnam|mexico|brazil|australia|ireland|netherlands|poland|italy|spain|switzerland|austria|"
                      r"czech|bangalore|bengaluru|hyderabad|shanghai|beijing|toronto|ontario|quebec|munich|penang|hsinchu|"
-                     r"tokyo|seoul|paris|london|amsterdam|gdansk|kaohsiung|noida)\b", re.I)
+                     r"tokyo|seoul|paris|london|amsterdam|gdansk|kaohsiung|noida|norway|sweden|denmark|finland|belgium|scotland|"
+                     r"hungary|romania|portugal|greece|turkey|thailand|indonesia|new zealand|chile|argentina|costa rica|"
+                     r"armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest)\b", re.I)
 
 
 def is_us(loc):
@@ -165,3 +167,23 @@ NOT_ECE = re.compile(r"\b(analyst|analytics|reporting|data|banking|bank|investme
                      r"service sales|business analyst|crm|salesforce admin)\b", re.I)
 SEMI_NAME = re.compile(r"\b(semiconductor\w*|semi|micro\w*|electronics?|silicon|devices|instruments|photonics|"
                        r"circuits?|chips?|logic|wafer|fab)\b", re.I)
+
+
+GRAD = re.compile(r"\b(ph\.?\s?d|doctoral|master'?s|m\.s\.|ms|mba|graduate students?|meng)\b", re.I)
+UNDERGRAD = re.compile(r"\b(bachelor'?s|b\.s\.|bs|bsee|bsce|undergrad\w*|b\.e\.)\b", re.I)
+PURSUING_GRAD = re.compile(r"(pursuing|enrolled in|candidate for)[^.\n]{0,40}\b(ph\.?\s?d|doctoral|master'?s|m\.s\.|graduate degree)", re.I)
+
+
+def grad_only(title, desc="", degrees=()):
+    """True when an undergrad (BS) student can't apply."""
+    if degrees and "Bachelor's" not in degrees and any(d in degrees for d in ("Master's", "PhD", "MBA")):
+        return True
+    if GRAD.search(title) and not UNDERGRAD.search(title):
+        return True
+    if desc and PURSUING_GRAD.search(desc) and not re.search(r"(pursuing|enrolled in)[^.\n]{0,60}\b(bachelor|undergrad|b\.s\.|bs)\b", desc, re.I):
+        return True
+    return False
+
+
+def needs_clearance(text):
+    return bool(re.search(r"\b(security clearance|clearance required|active secret|ts/sci|top secret)\b", text or "", re.I))
