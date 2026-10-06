@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.anthropic.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Summer 2027 search</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='2' y='2' width='12' height='12' rx='2' fill='%2317694F'/></svg>">
@@ -171,7 +172,24 @@ let prevVisit = S.lastVisit;
 const ui = {tab:"board", feed:{q:"", lanes:new Set(["sales"]), bay:false, tier:false, clean:false, fresh:false, coop:"all", limit:60},
   co:{q:"", open:false}, sortItems:"urgency"};
 
-function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s){ const b = blank(); return {...b, ...s, settings:{...b.settings, ...s.settings, goals:{...b.settings.goals, ...(s.settings||{}).goals}}}; } }catch(e){} return blank(); }
+function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s) return normalize(s); }catch(e){} return blank(); }
+/* Fill defaults and coerce types. Runs on stored data and on restored backups, which can contain anything. */
+function normalize(s){
+  const b = blank(), num = (v, d, max) => Math.min(max, Math.max(0, Math.round(Number(v)) || d));
+  const o = {...b, ...s, settings:{...b.settings, ...s.settings, goals:{...b.settings.goals, ...(s.settings||{}).goals}}};
+  for(const k of ["items","hidden","companyNotes","analyses","jds"]) if(!o[k] || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};
+  if(!Array.isArray(o.contacts)) o.contacts = [];
+  const st = o.settings, g = st.goals;
+  for(const k of ["apiKey","model","profile","resume","planned"]) if(typeof st[k] !== "string") st[k] = b.settings[k];
+  st.followDays = Math.max(3, num(st.followDays, 14, 365));
+  g.p1 = num(g.p1, 15, 200) || 15; g.all = num(g.all, 40, 200) || 40;
+  for(const a of Object.values(o.analyses)){
+    if(!a || typeof a !== "object") continue;
+    a.current = num(a.current, 0, 100); a.projected = num(a.projected, 0, 100);
+    for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
+  }
+  return o;
+}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ alert("Could not save to browser storage: " + e.message); } }
 
 /* ---------- helpers ---------- */
@@ -215,7 +233,7 @@ function renderMeta(){
   if(!L.generated_at) return;
   const bad = SRC.sources.filter(s => !s.ok);
   const hrs = Math.round((Date.now() - new Date(L.generated_at)) / 36e5);
-  $("#meta").innerHTML = `Updated ${hrs < 1 ? "under an hour" : hrs + "h"} ago, ${L.count} open roles. ` +
+  $("#meta").innerHTML = `Updated ${hrs < 1 ? "under an hour" : hrs + "h"} ago, ${esc(L.count)} open roles. ` +
     (bad.length ? `<button id="srcBtn">${bad.length} feed${bad.length>1?"s":""} failing</button>` : `All ${SRC.sources.length} feeds working.`);
   const b = $("#srcBtn"); if(b) b.onclick = openSources;
 }
@@ -236,10 +254,10 @@ function renderGoals(){
   const behind = (cnt, goal, by) => cnt < goal && days(today(), by) <= 10;
   const fu = followUps(), ds = dueSoon();
   $("#goals").innerHTML = `
-   <div class="goal${behind(p1,g.p1,g.p1By)?" warn":""}"><div class="num">${p1}<small> / ${g.p1}</small></div>${dies(g.p1,p1)}<div class="lbl">P1 applications by ${fmt(g.p1By)} (${Math.max(0,days(today(),g.p1By))} days left)</div></div>
-   <div class="goal${behind(ap.length,g.all,g.allBy)?" warn":""}"><div class="num">${ap.length}<small> / ${g.all}</small></div>${dies(g.all,ap.length)}<div class="lbl">All applications by ${fmt(g.allBy)}</div></div>
+   <div class="goal${behind(p1,g.p1,g.p1By)?" warn":""}"><div class="num">${p1}<small> / ${esc(g.p1)}</small></div>${dies(g.p1,p1)}<div class="lbl">P1 applications by ${fmt(g.p1By)} (${Math.max(0,days(today(),g.p1By))} days left)</div></div>
+   <div class="goal${behind(ap.length,g.all,g.allBy)?" warn":""}"><div class="num">${ap.length}<small> / ${esc(g.all)}</small></div>${dies(g.all,ap.length)}<div class="lbl">All applications by ${fmt(g.allBy)}</div></div>
    <div class="goal"><div class="num">${ds.length}</div><div class="lbl">Saved roles due in the next 7 days</div></div>
-   <div class="goal"><div class="num">${fu.total}</div><div class="lbl">Follow-ups due (${S.settings.followDays}+ days quiet)</div></div>`;
+   <div class="goal"><div class="num">${fu.total}</div><div class="lbl">Follow-ups due (${esc(S.settings.followDays)}+ days quiet)</div></div>`;
 }
 
 /* ---------- render router ---------- */
@@ -265,7 +283,7 @@ function renderBoard(){
       <select class="status-select" id="sortItems" aria-label="Sort"><option value="urgency">Most urgent first</option><option value="match"${ui.sortItems==="match"?" selected":""}>Best match first</option></select>
       <button class="btn small" id="matchAll">Match all with Claude</button>
       <button class="btn small" id="addManual">Add role</button></header>
-    ${fu.cs.length ? `<div class="filters">${fu.cs.map(c => `<span class="chip due" data-contact="${c.id}" style="cursor:pointer">Follow up: ${esc(c.name)} (${esc(c.company)})</span>`).join("")}</div>` : ""}
+    ${fu.cs.length ? `<div class="filters">${fu.cs.map(c => `<span class="chip due" data-contact="${esc(c.id)}" style="cursor:pointer">Follow up: ${esc(c.name)} (${esc(c.company)})</span>`).join("")}</div>` : ""}
     ${items.length ? `<table><thead><tr><th>Role</th><th>Status</th><th>Due</th><th>Match</th></tr></thead><tbody>
      ${items.map(itemRow).join("")}</tbody></table>` : `<div class="empty">Nothing saved yet. Add roles from the openings on the right.</div>`}
    </section>
@@ -287,9 +305,9 @@ function itemRow(i){
   let due = "";
   if(i.deadline){ const d = days(today(), i.deadline); due = `<span class="chip ${d<=7 && d>=0 ? "due":""}">${fmt(i.deadline)}${d<0?" (passed)":""}</span>`; }
   if(quiet !== null && quiet >= S.settings.followDays) due += `<span class="chip due">Quiet ${quiet}d</span>`;
-  return `<tr class="row" data-id="${i.id}"><td><span class="lane ${esc(i.lane)}"></span><span class="co">${esc(i.company)}</span><span class="tier">${tierOf(i.company)}</span>
+  return `<tr class="row" data-id="${esc(i.id)}"><td><span class="lane ${esc(i.lane)}"></span><span class="co">${esc(i.company)}</span><span class="tier">${esc(tierOf(i.company))}</span>
      <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
-    <td><select class="status-select" data-status="${i.id}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
+    <td><select class="status-select" data-status="${esc(i.id)}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
     <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong><div class="sub">${esc(a.projected)}% projected</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
 }
@@ -325,12 +343,12 @@ function feedPanel(wide){
 function feedRow(l, wide){
   const saved = itemFor(l.id), isNew = prevVisit ? l.first_seen > prevVisit : false;
   const q = quickFit(l.desc || S.jds[l.id] || "");
-  return `<li data-lid="${l.id}"><div><span class="lane ${l.lane}"></span><span class="co">${esc(l.company)}</span><span class="tier">${esc(l.tier)}</span>
+  return `<li data-lid="${esc(l.id)}"><div><span class="lane ${esc(l.lane)}"></span><span class="co">${esc(l.company)}</span><span class="tier">${esc(l.tier)}</span>
      ${isNew ? `<span class="chip new">New</span>` : ""}
      <div class="t">${esc(l.title)}</div>
      <div class="sub">${esc(l.location || "Location not listed")}${l.term !== "Unspecified" ? ", " + esc(l.term) : ""}${wide && q ? `, keyword fit ${q.hit}/${q.of}` : ""}</div>
      ${l.flags.map(x => `<span class="chip flag">${esc(x)}</span>`).join("")}${l.tags.map(x => `<span class="chip good">${esc(x)}</span>`).join("")}</div>
-   <button class="btn small add" data-add="${l.id}" ${saved ? "disabled" : ""} aria-label="Save to apply later">${saved ? "Saved" : "Save"}</button></li>`;
+   <button class="btn small add" data-add="${esc(l.id)}" ${saved ? "disabled" : ""} aria-label="Save to apply later">${saved ? "Saved" : "Save"}</button></li>`;
 }
 function wireFeed(){
   const f = ui.feed, m = $("#main");
@@ -390,6 +408,7 @@ async function claudeMatch(key, company, title, location){
   if(!m) throw new Error("Claude's reply was not JSON. Try again.");
   const a = JSON.parse(m[0]); a.at = today(); a.model = st.model;
   a.current = Math.round(Number(a.current)) || 0; a.projected = Math.round(Number(a.projected)) || 0;
+  for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
   S.analyses[key] = a; save(); return a;
 }
 async function matchAll(){
@@ -442,7 +461,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape") closeDrawer()
 function listingHeader(l){
   const c = coByName(l.company);
   return `<h2>${esc(l.title)}</h2><p class="sub">${esc(l.company)}${c ? `, ${esc(c.tier)}, ${esc(c.segment)}` : ", not on your company list"}</p>
-   <p>${esc(l.location || "Location not listed")}<br><span class="sub">${l.term === "Unspecified" ? "Term not stated" : esc(l.term)}${l.coop ? ", co-op" : ""}. Lane: ${LANES[l.lane]}. First seen ${fmt(l.first_seen)}. Source: ${esc(l.sources.join(", "))}.</span></p>
+   <p>${esc(l.location || "Location not listed")}<br><span class="sub">${l.term === "Unspecified" ? "Term not stated" : esc(l.term)}${l.coop ? ", co-op" : ""}. Lane: ${esc(LANES[l.lane])}. First seen ${fmt(l.first_seen)}. Source: ${esc(l.sources.join(", "))}.</span></p>
    ${l.flags.map(x => `<span class="chip flag">${esc(x)}</span>`).join("")}${l.tags.map(x => `<span class="chip good">${esc(x)}</span>`).join("")}`;
 }
 function openListing(lid){
@@ -530,9 +549,9 @@ function openCompany(name){
    <h3>Your notes</h3><textarea class="field" id="coNote" rows="4">${esc(S.companyNotes[name]||"")}</textarea>
    <h3>Open roles (${roles.length})</h3>
    ${roles.length ? `<ul class="feed wide">${roles.map(l => feedRow(l, true)).join("")}</ul>` : `<p class="note">Nothing posted right now.</p>`}
-   <h3>Contacts</h3>${contacts.length ? contacts.map(x => `<p><a href="#" data-ct="${x.id}">${esc(x.name)}</a> <span class="sub">${esc(x.title||"")}</span></p>`).join("") : `<p class="note">None yet.</p>`}
+   <h3>Contacts</h3>${contacts.length ? contacts.map(x => `<p><a href="#" data-ct="${esc(x.id)}">${esc(x.name)}</a> <span class="sub">${esc(x.title||"")}</span></p>`).join("") : `<p class="note">None yet.</p>`}
    <button class="btn small" id="addCt">Add contact here</button>
-   <h3>Feeds</h3>${ss.length ? ss.map(s => `<p class="${s.ok ? "sub" : "src-bad"}">${esc(s.name)}: ${s.ok ? s.rows + " rows" : esc(s.error)}</p>`).join("") : `<p class="note">${c.sources && c.sources.length ? "Not run yet." : "No direct feed. Roles here come from the GitHub repos only. Ask Claude Code to add this company's careers site."}</p>`}`);
+   <h3>Feeds</h3>${ss.length ? ss.map(s => `<p class="${s.ok ? "sub" : "src-bad"}">${esc(s.name)}: ${s.ok ? esc(s.rows) + " rows" : esc(s.error)}</p>`).join("") : `<p class="note">${c.sources && c.sources.length ? "Not run yet." : "No direct feed. Roles here come from the GitHub repos only. Ask Claude Code to add this company's careers site."}</p>`}`);
   $("#coNote").onchange = e => { S.companyNotes[name] = e.target.value; save(); };
   $("#addCt").onclick = () => openContact(null, name);
   $("#drawer").querySelectorAll("[data-ct]").forEach(a => a.onclick = e => { e.preventDefault(); openContact(a.dataset.ct); });
@@ -545,7 +564,7 @@ function renderContacts(){
   $("#main").innerHTML = `<section class="panel"><header><h2>Contacts</h2><span class="count">${cs.length} people</span><button class="btn small" id="addC">Add contact</button></header>
    ${cs.length ? `<table><thead><tr><th>Name</th><th>Company</th><th>Met at</th><th>Last touch</th><th>Next follow-up</th></tr></thead><tbody>
     ${cs.map(c => { const due = c.next && c.next <= today();
-      return `<tr class="row" data-id="${c.id}"><td><span class="co">${esc(c.name)}</span><div class="sub">${esc(c.title||"")}</div></td><td>${esc(c.company)}</td>
+      return `<tr class="row" data-id="${esc(c.id)}"><td><span class="co">${esc(c.name)}</span><div class="sub">${esc(c.title||"")}</div></td><td>${esc(c.company)}</td>
        <td class="sub">${esc(c.met||"")}</td><td>${fmt(c.last)}</td><td>${c.next ? `<span class="chip ${due ? "due" : ""}">${fmt(c.next)}</span>` : ""}</td></tr>`; }).join("")}</tbody></table>`
     : `<div class="empty">No contacts yet. Add people from career fairs, info sessions, and LinkedIn so follow-ups don't slip.</div>`}</section>`;
   $("#addC").onclick = () => openContact(null);
@@ -566,7 +585,7 @@ function openContact(id, company=""){
     <label for="cNx">Next follow-up</label><input id="cNx" type="date" value="${esc(c.next)}">
     <label for="cNo">Notes</label><textarea id="cNo" rows="4">${esc(c.notes)}</textarea>
    </div>
-   <p class="note">Leave next follow-up blank to set it ${S.settings.followDays} days after last touch.</p>
+   <p class="note">Leave next follow-up blank to set it ${esc(S.settings.followDays)} days after last touch.</p>
    <div class="actions"><button class="btn primary" id="cSave">${id ? "Save changes" : "Add contact"}</button>
     ${id ? `<button class="btn" id="cTouch">Contacted today</button><button class="btn" id="cDel">Delete</button>` : ""}<span class="note" id="cMsg"></span></div>`);
   const read = () => Object.assign(c, {name:$("#cN").value.trim(), title:$("#cT").value.trim(), company:$("#cC").value.trim(), met:$("#cM").value.trim(),
@@ -583,7 +602,7 @@ function openSources(){
   openDrawer(`<h2>Feed health</h2><p class="sub">Last run ${new Date(SRC.generated_at).toLocaleString()}. A failing feed doesn't close its roles; they stay until it works again.</p>
    <h3>Failing (${bad.length})</h3>${bad.map(s => `<p class="src-bad">${esc(s.name)}<br><span class="sub">${esc(s.error)}</span></p>`).join("") || `<p class="note">None.</p>`}
    <p class="note">To fix one, ask Claude Code: "the ${esc((bad[0]||{}).name || "X")} feed is failing, fix the adapter."</p>
-   <h3>Working (${good.length})</h3>${good.map(s => `<p class="sub">${esc(s.name)}: ${s.rows} rows</p>`).join("")}`);
+   <h3>Working (${good.length})</h3>${good.map(s => `<p class="sub">${esc(s.name)}: ${esc(s.rows)} rows</p>`).join("")}`);
 }
 
 /* ---------- settings, backup, calendar ---------- */
@@ -599,11 +618,11 @@ function openSettings(){
    <h3>Resume text</h3><textarea class="field" id="sResume" rows="10" placeholder="Paste your resume as plain text">${esc(st.resume)}</textarea>
    <h3>Planned work (for projected match)</h3><textarea class="field" id="sPlanned" rows="8">${esc(st.planned)}</textarea>
    <h3>Goals and follow-ups</h3>
-   <div class="kv"><label for="gP1">P1 applications</label><input id="gP1" type="number" min="1" value="${g.p1}">
-    <label for="gP1By">by</label><input id="gP1By" type="date" value="${g.p1By}">
-    <label for="gAll">All applications</label><input id="gAll" type="number" min="1" value="${g.all}">
-    <label for="gAllBy">by</label><input id="gAllBy" type="date" value="${g.allBy}">
-    <label for="sFu">Follow up after</label><input id="sFu" type="number" min="3" value="${st.followDays}"></div>
+   <div class="kv"><label for="gP1">P1 applications</label><input id="gP1" type="number" min="1" value="${esc(g.p1)}">
+    <label for="gP1By">by</label><input id="gP1By" type="date" value="${esc(g.p1By)}">
+    <label for="gAll">All applications</label><input id="gAll" type="number" min="1" value="${esc(g.all)}">
+    <label for="gAllBy">by</label><input id="gAllBy" type="date" value="${esc(g.allBy)}">
+    <label for="sFu">Follow up after</label><input id="sFu" type="number" min="3" value="${esc(st.followDays)}"></div>
    <div class="actions"><button class="btn primary" id="sSave">Save settings</button><span class="note" id="sMsg"></span></div>
    <h3>Calendar</h3><p class="note">Exports deadlines only. In Google Calendar, create a calendar named Internships, then import this file into it so you can hide it anytime.</p>
    <div class="actions"><button class="btn" id="ics">Download deadlines (.ics)</button></div>
@@ -612,8 +631,8 @@ function openSettings(){
   $("#sModel").value = st.model;
   $("#sSave").onclick = () => {
     Object.assign(st, {apiKey:$("#sKey").value.trim(), model:$("#sModel").value, profile:$("#sProfile").value, resume:$("#sResume").value, planned:$("#sPlanned").value,
-      followDays:Math.max(3, +$("#sFu").value || 14)});
-    Object.assign(g, {p1:+$("#gP1").value || 15, p1By:$("#gP1By").value, all:+$("#gAll").value || 40, allBy:$("#gAllBy").value});
+      followDays:Math.min(365, Math.max(3, Math.round(+$("#sFu").value) || 14))});
+    Object.assign(g, {p1:Math.min(200, Math.round(+$("#gP1").value) || 15), p1By:$("#gP1By").value, all:Math.min(200, Math.round(+$("#gAll").value) || 40), allBy:$("#gAllBy").value});
     save(); renderGoals(); render(); $("#sMsg").textContent = "Saved.";
   };
   $("#ics").onclick = exportIcs; $("#exp2").onclick = exportBackup; $("#imp").onclick = () => $("#importFile").click();
@@ -621,19 +640,21 @@ function openSettings(){
 function download(name, text, type){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
 function exportBackup(){ const copy = JSON.parse(JSON.stringify(S)); copy.settings.apiKey = ""; download(`internship-backup-${today()}.json`, JSON.stringify(copy, null, 1), "application/json"); }
 function exportIcs(){
-  const ev = Object.values(S.items).filter(i => i.deadline && i.status === "Saved");
+  const ev = Object.values(S.items).filter(i => /^\d{4}-\d{2}-\d{2}$/.test(i.deadline || "") && i.status === "Saved");
+  const text = s => String(s ?? "").replace(/[\\;,]/g, m => "\\" + m).replace(/\r\n|\r|\n/g, "\\n");  // RFC 5545 TEXT
+  const line = s => String(s ?? "").replace(/[\r\n]+/g, "");
   if(!ev.length){ alert("No saved roles have deadlines yet."); return; }
   const d = s => s.replace(/-/g,""), stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15) + "Z";
   const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//s27dash//EN","X-WR-CALNAME:Internships"];
-  ev.forEach(i => lines.push("BEGIN:VEVENT", `UID:${i.id}@s27dash`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d(i.deadline)}`, `DTEND;VALUE=DATE:${d(addDays(i.deadline,1))}`,
-    `SUMMARY:Deadline: ${(i.company + ", " + i.title).replace(/[,;\\]/g, m => "\\" + m)}`, safeUrl(i.url) ? `URL:${i.url}` : "", "END:VEVENT"));
+  ev.forEach(i => lines.push("BEGIN:VEVENT", `UID:${line(i.id)}@s27dash`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d(i.deadline)}`, `DTEND;VALUE=DATE:${d(addDays(i.deadline,1))}`,
+    `SUMMARY:Deadline: ${text(i.company + ", " + i.title)}`, safeUrl(i.url) ? `URL:${line(i.url)}` : "", "END:VEVENT"));
   lines.push("END:VCALENDAR");
   download("internship-deadlines.ics", lines.filter(Boolean).join("\r\n"), "text/calendar");
 }
 $("#importFile").onchange = async e => {
   const f = e.target.files[0]; if(!f) return;
   try{ const data = JSON.parse(await f.text()); if(!data.items) throw new Error("Not a backup file.");
-    const key = S.settings.apiKey; S = {...blank(), ...data}; S.settings.apiKey = key || data.settings.apiKey; save(); renderGoals(); render(); closeDrawer(); alert("Backup restored."); }
+    const key = S.settings.apiKey; S = normalize(data); S.settings.apiKey = key || S.settings.apiKey; save(); renderGoals(); render(); closeDrawer(); alert("Backup restored."); }
   catch(err){ alert("Restore failed: " + err.message); }
   e.target.value = "";
 };
