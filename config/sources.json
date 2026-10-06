@@ -1,0 +1,16 @@
+{
+ "repos": [
+  {"name": "Simplify Summer 2027 + off-season", "type": "simplify_json",
+   "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"},
+  {"name": "speedyapply 2027 SWE", "type": "md_table", "default_term": "Unspecified",
+   "url": "https://raw.githubusercontent.com/speedyapply/2027-SWE-College-Jobs/main/README.md"},
+  {"name": "resumax tech internships", "type": "md_table", "default_term": "Unspecified",
+   "url": "https://raw.githubusercontent.com/resumax/tech-internships/main/README.md"},
+  {"name": "sndsh404 summer 2027", "type": "md_table", "default_term": "Summer 2027",
+   "url": "https://raw.githubusercontent.com/sndsh404/summer-2027-internships/main/README.md"},
+  {"name": "Khushsj30 hardware 2027", "type": "md_table", "default_term": "Unspecified",
+   "url": "https://raw.githubusercontent.com/Khushsj30/hardware-internships-2027/main/README.md"}
+ ],
+ "detail_fetch_cap": 80,
+ "close_after_missed_runs": 2
+}

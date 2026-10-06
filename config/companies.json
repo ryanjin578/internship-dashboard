@@ -1,0 +1,2259 @@
+[
+ {
+  "name": "Micron",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug 2026; rolling thru Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "AI resume screen: mirror keywords. Apply-by-Oct guidance.",
+  "sources": [
+   {
+    "host": "micron.wd1.myworkdayjobs.com",
+    "site": "External",
+    "tenant": "micron",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Intel",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "intel.wd1.myworkdayjobs.com",
+    "site": "external",
+    "tenant": "intel",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Texas Instruments",
+  "aliases": [
+   "TI"
+  ],
+  "tier": "P1",
+  "segment": "Analog / MCU / Power",
+  "fit": "Stretch",
+  "window": "Late Aug - mid Sep 2026 (best response)",
+  "gpa_floor": "3.0 (ATS-enforced)",
+  "bay_site": "Yes",
+  "notes": "Tracker 9/15: Sales Engineering Intern, Santa Clara (job 25017890) open. Keyword ATS: mirror JD vocab.",
+  "sources": [
+   {
+    "host": "edbz.fa.us2.oraclecloud.com",
+    "site": "CX",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "ebgj.fa.us2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Applied Materials",
+  "aliases": [
+   "AMAT"
+  ],
+  "tier": "P1",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "amat.wd1.myworkdayjobs.com",
+    "site": "External",
+    "tenant": "amat",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Lam Research",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "KLA",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "kla.wd1.myworkdayjobs.com",
+    "site": "UR",
+    "tenant": "kla",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "kla.wd1.myworkdayjobs.com",
+    "site": "search",
+    "tenant": "kla",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "kla.wd1.myworkdayjobs.com",
+    "site": "Search",
+    "tenant": "kla",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "ASML",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "asml.wd3.myworkdayjobs.com",
+    "site": "asmlext1",
+    "tenant": "asml",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Teradyne",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "jobs.teradyne.com",
+    "verified": "host confirmed by web search; feed endpoint untested"
+   }
+  ]
+ },
+ {
+  "name": "Keysight",
+  "aliases": [
+   "Keysight Technologies"
+  ],
+  "tier": "P1",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "jobs.keysight.com",
+    "type": "jibe",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Analog Devices",
+  "aliases": [
+   "ADI"
+  ],
+  "tier": "P1",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "analogdevices.wd1.myworkdayjobs.com",
+    "site": "External",
+    "tenant": "analogdevices",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Microchip",
+  "aliases": [
+   "Microchip Technology"
+  ],
+  "tier": "P1",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "wd5.myworkdaysite.com",
+    "site": "External",
+    "tenant": "microchiphr",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "onsemi",
+  "aliases": [
+   "ON Semiconductor",
+   "onsemi"
+  ],
+  "tier": "P1",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "hctz.fa.us2.oraclecloud.com",
+    "site": "CX_1001",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Silicon Labs",
+  "aliases": [
+   "Silicon Laboratories"
+  ],
+  "tier": "P1",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "GlobalFoundries",
+  "aliases": [
+   "GF"
+  ],
+  "tier": "P1",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "globalfoundries.wd1.myworkdayjobs.com",
+    "site": "External",
+    "tenant": "globalfoundries",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "SkyWater Technology",
+  "aliases": [
+   "SkyWater"
+  ],
+  "tier": "P1",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "TSMC Arizona",
+  "aliases": [
+   "TSMC",
+   "Taiwan Semiconductor Manufacturing"
+  ],
+  "tier": "P1",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "FormFactor",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Astera Labs",
+  "aliases": [
+   "Astera"
+  ],
+  "tier": "P1",
+  "segment": "Interconnect / Networking",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "Tracker 9/15: US Sales Engineer Intern + FAE Intern live under Early Career NA 2027. Warm contact.",
+  "sources": [
+   {
+    "type": "greenhouse",
+    "board": "asteralabs",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "type": "greenhouse",
+    "board": "asteraearlycareer2026",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "type": "greenhouse",
+    "board": "asteraearlycareer2027",
+    "verified": "guess: untested"
+   }
+  ]
+ },
+ {
+  "name": "Cadence",
+  "aliases": [
+   "Cadence Design Systems"
+  ],
+  "tier": "P1",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "cadence.wd1.myworkdayjobs.com",
+    "site": "External_Careers",
+    "tenant": "cadence",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "cadence.wd1.myworkdayjobs.com",
+    "site": "Univ_Careers",
+    "tenant": "cadence",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "cadence.wd1.myworkdayjobs.com",
+    "site": "University_Talent_Intern",
+    "tenant": "cadence",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Synopsys",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Siemens EDA (Mentor)",
+  "aliases": [
+   "Siemens EDA",
+   "Siemens Digital Industries Software",
+   "Mentor Graphics"
+  ],
+  "tier": "P1",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Arrow Electronics",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "Summer 2027 postings roll Sep 2026 to Feb 2027; apply early. Only internship postings (FAE reqs want 4-7 yrs).",
+  "sources": [
+   {
+    "type": "workday",
+    "host": "arrow.wd1.myworkdayjobs.com",
+    "tenant": "arrow",
+    "site": "AC",
+    "verified": "web search: apply links go to this Workday site"
+   }
+  ]
+ },
+ {
+  "name": "Avnet",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "avnet.wd1.myworkdayjobs.com",
+    "site": "external",
+    "tenant": "avnet",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "wd1.myworkdaysite.com",
+    "site": "External",
+    "tenant": "avnet",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Marvell",
+  "aliases": [],
+  "tier": "P1",
+  "segment": "Interconnect / Networking",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "Treat as P1. No AI tools in interviews.",
+  "sources": [
+   {
+    "host": "marvell.wd1.myworkdayjobs.com",
+    "site": "MarvellCareers",
+    "tenant": "marvell",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "marvell.wd1.myworkdayjobs.com",
+    "site": "MarvellCareers2",
+    "tenant": "marvell",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Rivian",
+  "aliases": [
+   "Rivian Automotive",
+   "Rivian and VW Group Technology"
+  ],
+  "tier": "P1",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "careers.rivian.com",
+    "type": "jibe",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "org": "rivianvw.tech",
+    "type": "ashby",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "AMD",
+  "aliases": [
+   "Advanced Micro Devices"
+  ],
+  "tier": "P2",
+  "segment": "Fabless Compute & AI",
+  "fit": "Moonshot",
+  "window": "Late Aug 2026; peak interviews Sep-Oct",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "careers.amd.com",
+    "type": "jibe",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "NVIDIA",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Fabless Compute & AI",
+  "fit": "Moonshot",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "None listed",
+  "bay_site": "Yes",
+  "notes": "Ignite program: apply day one of the window.",
+  "sources": [
+   {
+    "host": "nvidia.wd5.myworkdayjobs.com",
+    "site": "NVIDIAExternalCareerSite",
+    "tenant": "nvidia",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Qualcomm",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Fabless Compute & AI",
+  "fit": "Moonshot",
+  "window": "~Sep 2026",
+  "gpa_floor": "None printed",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "domain": "qualcomm.com",
+    "host": "qualcomm.eightfold.ai",
+    "type": "eightfold",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Infineon",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "NXP",
+  "aliases": [
+   "NXP Semiconductors"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "nxp.wd3.myworkdayjobs.com",
+    "site": "careers",
+    "tenant": "nxp",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "STMicroelectronics",
+  "aliases": [
+   "ST",
+   "STMicro"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Renesas",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "RenesasElectronics",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Nordic Semiconductor",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Monolithic Power Systems",
+  "aliases": [
+   "MPS",
+   "Monolithic Power"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "monolithicpower.wd12.myworkdayjobs.com",
+    "site": "MPS_Careers",
+    "tenant": "monolithicpower",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Allegro MicroSystems",
+  "aliases": [
+   "Allegro"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "allegromicro.wd5.myworkdayjobs.com",
+    "site": "allegrocareers",
+    "tenant": "allegromicro",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Qorvo",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Skyworks",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Power Integrations",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Semtech",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "semtech.wd1.myworkdayjobs.com",
+    "site": "SemtechCareers",
+    "tenant": "semtech",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "host": "semtech.wd1.myworkdayjobs.com",
+    "site": "SemtechJobs",
+    "tenant": "semtech",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Diodes Incorporated",
+  "aliases": [
+   "Diodes"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Wolfspeed",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Navitas",
+  "aliases": [
+   "Navitas Semiconductor"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Vicor",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "SK hynix America",
+  "aliases": [
+   "SK hynix"
+  ],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "board": "skhynixamerica",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Samsung Semiconductor US",
+  "aliases": [
+   "Samsung",
+   "Samsung Electronics",
+   "Samsung Semiconductor",
+   "Samsung Austin Semiconductor",
+   "Samsung Research America"
+  ],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "sec.wd3.myworkdayjobs.com",
+    "site": "Samsung_Careers",
+    "tenant": "sec",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "board": "samsungresearchamericainternship",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "board": "samsungsemiconductor",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Western Digital",
+  "aliases": [
+   "WD"
+  ],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "Tracker 9/12: SWE + HW umbrella reqs open, firmware track in both, deadline 10/20/26.",
+  "sources": [
+   {
+    "company": "WesternDigital",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Seagate",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Solidigm",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "Solidigm",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Kioxia America",
+  "aliases": [
+   "Kioxia"
+  ],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "Kioxia",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Credo Semiconductor",
+  "aliases": [
+   "Credo"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Rambus",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Alphawave Semi",
+  "aliases": [
+   "Alphawave",
+   "Alphawave IP"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Broadcom",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Moonshot",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Cisco (Silicon One)",
+  "aliases": [
+   "Cisco"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "cisco.wd5.myworkdayjobs.com",
+    "site": "cisco_careers",
+    "tenant": "cisco",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Arista Networks",
+  "aliases": [
+   "Arista"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Stretch",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "AristaNetworks",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Juniper Networks",
+  "aliases": [
+   "Juniper"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "org": "junipersquare",
+    "type": "ashby",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Coherent",
+  "aliases": [
+   "Coherent Corp"
+  ],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "hcwp.fa.us2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Lumentum",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Interconnect / Networking",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "lumentum.wd5.myworkdayjobs.com",
+    "site": "LITE",
+    "tenant": "lumentum",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Ansys",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Arm",
+  "aliases": [
+   "Arm Ltd",
+   "ARM"
+  ],
+  "tier": "P2",
+  "segment": "EDA & IP",
+  "fit": "Moonshot",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "SiFive",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "sifive.wd1.myworkdayjobs.com",
+    "site": "sifivecareers",
+    "tenant": "sifive",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Onto Innovation",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "onto.wd1.myworkdayjobs.com",
+    "site": "onto_careers",
+    "tenant": "onto",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Axcelis",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "axcelis.wd1.myworkdayjobs.com",
+    "site": "axcelis",
+    "tenant": "axcelis",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Veeco",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Kulicke & Soffa",
+  "aliases": [
+   "Kulicke and Soffa",
+   "K&S"
+  ],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "etyy.fa.ap2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Azenta / Brooks Automation",
+  "aliases": [
+   "Azenta",
+   "Brooks Automation"
+  ],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "brooksauto.wd1.myworkdayjobs.com",
+    "site": "Brooks_External_Site",
+    "tenant": "brooksauto",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "MKS Instruments",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "mksinst.wd1.myworkdayjobs.com",
+    "site": "MKSCareersUniversity",
+    "tenant": "mksinst",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Entegris",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "entegris.wd1.myworkdayjobs.com",
+    "site": "entegriscareers",
+    "tenant": "entegris",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Advanced Energy",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Ultra Clean Holdings",
+  "aliases": [
+   "UCT",
+   "Ultra Clean"
+  ],
+  "tier": "P2",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Ichor Systems",
+  "aliases": [
+   "Ichor"
+  ],
+  "tier": "P2",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Advantest America",
+  "aliases": [
+   "Advantest"
+  ],
+  "tier": "P2",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Cohu",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "hcbo.fa.us2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Tektronix",
+  "aliases": [
+   "Tek"
+  ],
+  "tier": "P2",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "National Instruments (Emerson)",
+  "aliases": [
+   "National Instruments",
+   "NI"
+  ],
+  "tier": "P2",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "hdjq.fa.us2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Rohde & Schwarz USA",
+  "aliases": [
+   "Rohde & Schwarz",
+   "Rohde and Schwarz"
+  ],
+  "tier": "P2",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Amkor Technology",
+  "aliases": [
+   "Amkor"
+  ],
+  "tier": "P2",
+  "segment": "Packaging / OSAT",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "ASE US",
+  "aliases": [
+   "ASE",
+   "ASE Group"
+  ],
+  "tier": "P2",
+  "segment": "Packaging / OSAT",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Integra Technologies",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Packaging / OSAT",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "board": "integrainterns",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "board": "integra",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Mouser Electronics",
+  "aliases": [
+   "Mouser"
+  ],
+  "tier": "P2",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Digi-Key",
+  "aliases": [
+   "DigiKey",
+   "Digi-Key Electronics"
+  ],
+  "tier": "P2",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "TTI Inc",
+  "aliases": [
+   "TTI"
+  ],
+  "tier": "P2",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Tesla",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "EV / AV Silicon",
+  "fit": "Moonshot",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Lucid Motors",
+  "aliases": [
+   "Lucid",
+   "Lucid Group"
+  ],
+  "tier": "P2",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "board": "lucidmotors",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   },
+   {
+    "board": "lucidbots",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Mobileye",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "EV / AV Silicon",
+  "fit": "Stretch",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Ambarella",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "EV / AV Silicon",
+  "fit": "Stretch",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "host": "ambarella.wd108.myworkdayjobs.com",
+    "site": "ambarella",
+    "tenant": "ambarella",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "indie Semiconductor",
+  "aliases": [
+   "indie"
+  ],
+  "tier": "P2",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Apple (Silicon / Platform Arch)",
+  "aliases": [
+   "Apple"
+  ],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Moonshot",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "MediaTek USA",
+  "aliases": [
+   "MediaTek"
+  ],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Ampere Computing",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Tenstorrent",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Routine",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "board": "tenstorrentuniversity",
+    "type": "greenhouse",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Groq",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Cerebras",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "SambaNova",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Untether AI",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Stretch",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Ambiq Micro",
+  "aliases": [
+   "Ambiq"
+  ],
+  "tier": "P3",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "MACOM",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "Aug - Nov 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Lattice Semiconductor",
+  "aliases": [
+   "Lattice"
+  ],
+  "tier": "P3",
+  "segment": "Fabless Compute & AI",
+  "fit": "Routine",
+  "window": "Aug - Oct 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Imagination Technologies",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EDA & IP",
+  "fit": "Stretch",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Silvaco",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EDA & IP",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Tower Semiconductor US",
+  "aliases": [
+   "Tower Semiconductor"
+  ],
+  "tier": "P3",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "X-FAB Texas",
+  "aliases": [
+   "X-FAB"
+  ],
+  "tier": "P3",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Polar Semiconductor",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "polarsemi.wd501.myworkdayjobs.com",
+    "site": "Polar",
+    "tenant": "polarsemi",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Bosch Roseville (semi)",
+  "aliases": [
+   "Bosch",
+   "Robert Bosch"
+  ],
+  "tier": "P3",
+  "segment": "Foundry / IDM Mfg",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "company": "BoschGroup",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "EV Group",
+  "aliases": [
+   "EVG"
+  ],
+  "tier": "P3",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Nova Ltd",
+  "aliases": [
+   "Nova"
+  ],
+  "tier": "P3",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Camtek",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "SUSS MicroTec",
+  "aliases": [
+   "SUSS"
+  ],
+  "tier": "P3",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Edwards Vacuum",
+  "aliases": [
+   "Edwards"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "edwards.wd5.myworkdayjobs.com",
+    "site": "edwardscareers",
+    "tenant": "edwards",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Air Liquide Electronics",
+  "aliases": [
+   "Air Liquide"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "airliquidehr.wd3.myworkdayjobs.com",
+    "site": "AirLiquideExternalCareer",
+    "tenant": "airliquidehr",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Linde Electronics",
+  "aliases": [
+   "Linde"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "DuPont Electronics",
+  "aliases": [
+   "DuPont"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Shin-Etsu US",
+  "aliases": [
+   "Shin-Etsu"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "SUMCO Phoenix",
+  "aliases": [
+   "SUMCO"
+  ],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Element Solutions",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Materials & Subsystems",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Chroma ATE US",
+  "aliases": [
+   "Chroma ATE",
+   "Chroma"
+  ],
+  "tier": "P3",
+  "segment": "Test, ATE & Metrology",
+  "fit": "Routine",
+  "window": "Sep 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Deca Technologies",
+  "aliases": [
+   "Deca"
+  ],
+  "tier": "P3",
+  "segment": "Packaging / OSAT",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Promex / QP Technologies",
+  "aliases": [
+   "Promex",
+   "QP Technologies"
+  ],
+  "tier": "P3",
+  "segment": "Packaging / OSAT",
+  "fit": "Routine",
+  "window": "Oct 2026 - Jan 2027",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Future Electronics",
+  "aliases": [
+   "Future"
+  ],
+  "tier": "P3",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Richardson RFPD",
+  "aliases": [
+   "Richardson"
+  ],
+  "tier": "P3",
+  "segment": "Distribution / Channel",
+  "fit": "Routine",
+  "window": "Nov 2026 - Feb 2027",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Waymo",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Moonshot",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Zoox",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Stretch",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "zoox",
+    "type": "lever",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Aurora Innovation",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Stretch",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Nuro",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Luminar",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Ouster",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Aeva",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Aptiv",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": "",
+  "sources": [
+   {
+    "host": "aptiv.wd5.myworkdayjobs.com",
+    "site": "aptiv_careers",
+    "tenant": "aptiv",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "ZF North America",
+  "aliases": [
+   "ZF",
+   "ZF Group"
+  ],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "No",
+  "notes": ""
+ },
+ {
+  "name": "Bosch (semiconductor/auto electronics)",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "EV / AV Silicon",
+  "fit": "Routine",
+  "window": "Sep - Dec 2026",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": ""
+ },
+ {
+  "name": "Sandisk",
+  "aliases": [
+   "SanDisk"
+  ],
+  "tier": "P2",
+  "segment": "Memory & Storage",
+  "fit": "Routine",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "",
+  "sources": [
+   {
+    "company": "Sandisk",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "IBM",
+  "aliases": [
+   "IBM Corporation"
+  ],
+  "tier": "P3",
+  "segment": "Technical sales (non-semi)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Pursuing Technical Sales Engineer Intern + Co-Op (Entry-Level Sales Program 2027)."
+ },
+ {
+  "name": "Tokyo Electron",
+  "aliases": [
+   "TEL"
+  ],
+  "tier": "P2",
+  "segment": "Equipment (WFE)",
+  "fit": "Routine",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "Yes",
+  "notes": "Found in repos.",
+  "sources": [
+   {
+    "host": "tel.wd3.myworkdayjobs.com",
+    "site": "tel-careers",
+    "tenant": "tel",
+    "type": "workday",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "auto": true
+ },
+ {
+  "name": "Cirrus Logic",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "Routine",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Found in repos (Austin)."
+ }
+]
