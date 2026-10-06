@@ -245,14 +245,40 @@ async function boot(){
     for(const s of SEEDS){ const id = uid(); S.items[id] = {id, ...s, status:"Saved", added:today(), lastActivity:today(), history:[{s:"Saved", d:today()}]}; }
     S.seeded = true;
   }
-  for(const it of Object.values(S.items)){  // attach seeds to live listings once the feed has them
-    if(!it.lid && it.find){
-      const l = L.listings.find(l => l.company === it.company && norm(l.title).includes(it.find) && l.status === "open");
-      if(l){ it.lid = l.id; it.url = it.url || l.url; it.title = l.title; it.location = l.location; }
-    }
-  }
+  for(const it of Object.values(S.items)) autoLink(it);  // attach saved roles to live listings once the feed has them
   S.lastVisit = today(); save();
   renderMeta(); renderGoals(); render();
+}
+
+/* ---------- linking saved roles to scraped listings ---------- */
+// "https://X.com/a/job/123/?src=li" -> "x.com/a/job/123"
+const urlKey = u => { try{ const x = new URL(u); return (x.host + x.pathname).toLowerCase().replace(/\/+$/, ""); }catch(e){ return ""; } };
+// Job ID at the end of the URL: the last run of 5+ digits in the last path segment ("/job/25017890", "/Sales-Intern_JR-0012345", "/78488-en_US")
+const urlJobId = u => { const m = urlKey(u).split("/").pop().match(/\d{5,}/g); return m ? m[m.length - 1] : ""; };
+let urlIndex = null;
+function listingForUrl(u, company){
+  if(!urlIndex){
+    urlIndex = {byKey:new Map(), byId:new Map()};
+    for(const l of L.listings){
+      const k = urlKey(l.url), id = urlJobId(l.url);
+      if(k && !urlIndex.byKey.has(k)) urlIndex.byKey.set(k, l);
+      if(id) (urlIndex.byId.get(id) || urlIndex.byId.set(id, []).get(id)).push(l);
+    }
+  }
+  const exact = urlIndex.byKey.get(urlKey(u));
+  if(exact) return exact;
+  const id = urlJobId(u);  // same job ID on another URL form: only trust it within the same company
+  return (id && (urlIndex.byId.get(id) || []).find(l => norm(l.company) === norm(company))) || null;
+}
+function autoLink(it){
+  if(it.lid) return false;
+  let l = null;
+  if(it.find) l = L.listings.find(l => l.company === it.company && norm(l.title).includes(it.find) && l.status === "open");
+  if(!l && it.url) l = listingForUrl(it.url, it.company);
+  if(!l || itemFor(l.id)) return false;  // never link two saved roles to one listing
+  for(const store of [S.analyses, S.jds]) if(store[it.id] && !store[l.id]){ store[l.id] = store[it.id]; delete store[it.id]; }  // keep match / pasted JD
+  it.lid = l.id; it.url = it.url || l.url; it.title = l.title; it.location = l.location;
+  return true;
 }
 
 function renderMeta(){
@@ -538,9 +564,10 @@ function openItem(id){
     Object.assign(i, {company:$("#fCo").value.trim(), title:$("#fTi").value.trim(), location:$("#fLo").value.trim(), url:$("#fUrl").value.trim(),
       lane:$("#fLane").value, deadline:$("#fDl").value, resumeVersion:$("#fRv").value.trim(), referral:$("#fRef").value.trim(), notes:$("#fNo").value});
     if(!i.company || !i.title){ $("#savedNote").textContent = "Company and role are required."; return; }
+    const linked = autoLink(i);
     S.items[i.id] = i; save();
     const st = $("#fSt").value; if(st !== prev) setStatus(i.id, st); else { renderGoals(); render(); }
-    if(isNew) openItem(i.id); else $("#savedNote").textContent = "Saved.";
+    if(isNew || linked) openItem(i.id); else $("#savedNote").textContent = "Saved.";
   };
   if($("#delI")) $("#delI").onclick = () => { if(confirm("Remove this role from your list?")){ delete S.items[i.id]; save(); closeDrawer(); renderGoals(); render(); } };
   if(!isNew){ wireMatch(key, i.company, i.title, i.location, () => openItem(i.id)); wireJd(key); }

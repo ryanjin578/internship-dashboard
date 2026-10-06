@@ -14,6 +14,18 @@ from common import ROOT, CompanyIndex, jget
 
 SIMPLIFY = "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"
 
+# Feeds that Simplify links under the wrong company name. Never add these, whatever the company.
+WRONG_COMPANY = {
+    ("oracle", "ebgj.fa.us2.oraclecloud.com"),  # Pella Corporation (windows/doors), once linked as Texas Instruments
+    ("ashby", "junipersquare"),                 # Juniper Square (fintech), not Juniper Networks
+    ("greenhouse", "lucidbots"),                # LucidBots (drones), not Lucid Motors
+    ("ashby", "nova-talent"),                   # Titan (banking AI), not Nova Ltd
+}
+
+
+def blocked(s):
+    return (s["type"], s.get("host") or s.get("org") or s.get("board") or s.get("company")) in WRONG_COMPANY
+
 
 def source_from_url(u):
     p = urlparse(u)
@@ -77,7 +89,7 @@ def main():
         if not c:
             continue
         s = source_from_url(x.get("url", ""))
-        if s:
+        if s and not blocked(s):
             found.setdefault(c["name"], Counter())[json.dumps(s, sort_keys=True)] += 1
     changed = 0
     for c in companies:

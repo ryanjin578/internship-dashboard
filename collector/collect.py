@@ -394,6 +394,11 @@ REPO_ADAPTERS = {"simplify_json": r_simplify, "md_table": r_md_table}
 
 # ---------- pipeline ----------
 
+def feed_name(c, s):
+    label = s.get("site") or s.get("board") or s.get("company") or s.get("org") or s.get("host")
+    return f"{c['name']}: {s['type']} ({label})"
+
+
 def key_of(company, title, location):
     loc = norm(location.split(";")[0].split(",")[0])
     return hashlib.sha1(f"{norm(company)}|{norm(title)}|{loc}".encode()).hexdigest()[:12]
@@ -475,8 +480,7 @@ def main():
         if repos_only or (only and norm(c["name"]) not in only):
             continue
         for s in c.get("sources", []):
-            label = s.get("site") or s.get("board") or s.get("company") or s.get("org") or s.get("host")
-            jobs.append((c, s, f"{c['name']}: {s['type']} ({label})"))
+            jobs.append((c, s, feed_name(c, s)))
 
     def run(job):
         c, s, name = job
@@ -536,9 +540,12 @@ def main():
         if l["status"] == "closed":
             l["closed_on"] = old.get("closed_on", TODAY)
         listings.append(l)
+    configured = {feed_name(c, s) for c in COMPANIES for s in c.get("sources", [])} | {r["name"] for r in CFG["repos"]}
     for lid, old in prev.items():
         if lid in current:
             continue
+        if old.get("sources") and not any(s in configured for s in old["sources"]):
+            continue  # every source behind it was removed from config (e.g. a feed that was the wrong company)
         if only and norm(old["company"]) not in only:
             listings.append(old)
             continue

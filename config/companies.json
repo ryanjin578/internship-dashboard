@@ -59,15 +59,8 @@
     "site": "CX",
     "type": "oracle",
     "verified": "seen in Simplify apply links"
-   },
-   {
-    "host": "ebgj.fa.us2.oraclecloud.com",
-    "site": "CX_1",
-    "type": "oracle",
-    "verified": "seen in Simplify apply links"
    }
-  ],
-  "auto": true
+  ]
  },
  {
   "name": "Applied Materials",
