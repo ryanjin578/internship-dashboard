@@ -521,6 +521,41 @@ Reply with ONLY a JSON object, no prose, no code fences:
 {"current":0-100,"projected":0-100,"eligible":"yes|likely|unclear|no","eligibility_note":"one sentence","verdict":"one sentence: apply now, apply after X, or skip, and why","strengths":["max 3, short"],"gaps":[{"gap":"short","fix":"one concrete action, preferably a specific item from the planned work, with what to show on the resume"}],"keywords":["max 8 JD terms he can truthfully mirror"]}`;
 function analysisFor(i){ return S.analyses[i.lid || i.id]; }
 function jdFor(key){ const l = listingById(key); return (l && l.desc) || S.jds[key] || ""; }
+class RetryableReply extends Error {}  // cut off or unparseable: worth one automatic retry
+/* Sonnet 5.5 thinks by default and thinking counts toward max_tokens, so the first try keeps it
+   at low effort and the retry turns it off (between_tools is Sonnet 5.5 only) so the JSON always fits. */
+function matchBody(model, prompt, retry){
+  const b = {model, max_tokens:4000, system:SYS, messages:[{role:"user", content:prompt}]};
+  if(model.startsWith("claude-sonnet-5-5"))
+    Object.assign(b, retry ? {thinking:{type:"between_tools"}} : {thinking:{type:"adaptive"}, output_config:{effort:"low"}});
+  return b;
+}
+/* First balanced {...} in text that parses, skipping braces inside strings. */
+function firstJsonObject(s){
+  for(let i = s.indexOf("{"); i >= 0; i = s.indexOf("{", i + 1)){
+    let depth = 0, inStr = false, escp = false;
+    for(let j = i; j < s.length; j++){
+      const c = s[j];
+      if(inStr){ if(escp) escp = false; else if(c === "\\") escp = true; else if(c === '"') inStr = false; }
+      else if(c === '"') inStr = true;
+      else if(c === "{") depth++;
+      else if(c === "}" && --depth === 0){ try{ return JSON.parse(s.slice(i, j + 1)); }catch{ break; } }
+    }
+  }
+  return null;
+}
+async function matchRequest(st, prompt, retry){
+  const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
+    headers:{"content-type":"application/json","x-api-key":st.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify(matchBody(st.model, prompt, retry))});
+  if(!r.ok){ const t = await r.text(); throw new Error(`Anthropic API ${r.status}: ${t.slice(0,180)}`); }
+  const d = await r.json();
+  if(d.stop_reason === "refusal") throw new Error("Claude declined" + (d.stop_details?.explanation ? `: ${d.stop_details.explanation}` : "."));
+  const a = firstJsonObject((d.content || []).filter(b => b.type === "text").map(b => b.text).join(""));
+  if(a) return a;
+  if(d.stop_reason === "max_tokens") throw new RetryableReply("Reply cut off (max_tokens). Try again.");
+  throw new RetryableReply("Invalid JSON in Claude's reply. Try again.");
+}
 async function claudeMatch(key, company, title, location){
   const st = S.settings;
   if(!st.apiKey) throw new Error("Add your Anthropic API key in Settings first.");
@@ -528,15 +563,10 @@ async function claudeMatch(key, company, title, location){
   const jd = jdFor(key);
   if(jd.length < 150) throw new Error("No job description yet. Paste it into the box below, then match.");
   const prompt = `STUDENT\n${st.profile}\n\nRESUME\n${st.resume}\n\nPLANNED WORK (not done yet)\n${st.planned}\n\nPOSTING\nCompany: ${company}\nTitle: ${title}\nLocation: ${location}\n\n${jd.slice(0,6000)}`;
-  const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
-    headers:{"content-type":"application/json","x-api-key":st.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-    body:JSON.stringify({model:st.model, max_tokens:1200, system:SYS, messages:[{role:"user", content:prompt}]})});
-  if(!r.ok){ const t = await r.text(); throw new Error(`Anthropic API ${r.status}: ${t.slice(0,180)}`); }
-  const d = await r.json();
-  const txt = d.content.filter(b => b.type === "text").map(b => b.text).join("");
-  const m = txt.replace(/```json|```/g,"").match(/\{[\s\S]*\}/);
-  if(!m) throw new Error("Claude's reply was not JSON. Try again.");
-  const a = JSON.parse(m[0]); a.at = today(); a.model = st.model;
+  let a;
+  try{ a = await matchRequest(st, prompt, false); }
+  catch(e){ if(!(e instanceof RetryableReply)) throw e; a = await matchRequest(st, prompt, true); }
+  a.at = today(); a.model = st.model;
   a.current = Math.round(Number(a.current)) || 0; a.projected = Math.round(Number(a.projected)) || 0;
   for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
   S.analyses[key] = a; save(); return a;
