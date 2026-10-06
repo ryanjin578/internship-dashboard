@@ -1,0 +1,8 @@
+#!/bin/sh
+# Blocks a commit when gitleaks finds a secret in the staged changes.
+# Enable once per clone: git config core.hooksPath .githooks   (see README, "Secret scanning")
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not on PATH, so the commit was blocked. Install it (README, \"Secret scanning\")." >&2
+  exit 1
+fi
+exec gitleaks git --pre-commit --staged --redact --no-banner -v

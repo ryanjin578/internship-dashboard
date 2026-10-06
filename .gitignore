@@ -1,0 +1,12 @@
+# Personal exports from the dashboard
+internship-backup-*.json
+*.ics
+
+# Secrets
+.env*
+*.key
+
+# OS / tooling clutter
+.DS_Store
+Thumbs.db
+__pycache__/

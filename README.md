@@ -43,6 +43,16 @@ As of 2026-10-06: 81 of 134 companies have an official feed; all of them except 
 
 **Adding companies:** give a new entry `"auto": true` and run `python collector/discover_sources.py`; it fills feeds from Simplify apply links. Entries without `"auto"` (including `"sources": []`) are never changed.
 
+## Secret scanning
+A pre-commit hook runs [gitleaks](https://github.com/gitleaks/gitleaks) on staged changes and blocks the commit if it finds a secret (API keys, tokens, private keys). It also blocks commits when gitleaks isn't installed, so it can't be skipped by accident. Set it up once per clone:
+1. Install gitleaks: `winget install Gitleaks.Gitleaks` (Windows) or `brew install gitleaks` (Mac). Restart the terminal, then check `gitleaks version`.
+2. From the repo folder, turn on the repo's hooks: `git config core.hooksPath .githooks`. This applies to this repo only.
+3. Mac/Linux only: `chmod +x .githooks/pre-commit`.
+
+To scan the whole history by hand: `gitleaks git . --redact -v`. The nightly Action's commits don't go through the hook; they only write `data/`.
+
+`.gitignore` keeps dashboard backups (`internship-backup-*.json`), calendar exports (`*.ics`), `.env*` and `*.key` files out of the repo. Backups never include your API key, but they do include your resume and contacts.
+
 ## Tuning
 - Lanes and filters: regexes in `collector/common.py` (`SALES`, `SWE`, `HW`, `OFFTRACK`, `DEFENSE`).
 - Ranking: `score()` in `collector/collect.py` (sales/FAE first, then SWE, then HW; P1 > P2; Bay Area bonus; flags penalized).
