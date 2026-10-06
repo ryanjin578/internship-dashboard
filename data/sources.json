@@ -1,26 +1,26 @@
 {
- "generated_at": "2026-10-06T05:51:08+00:00",
+ "generated_at": "2026-10-06T06:01:13+00:00",
  "sources": [
   {
    "name": "Micron: workday (External)",
    "company": "Micron",
    "ok": true,
    "rows": 300,
-   "secs": 22.3
+   "secs": 23.8
   },
   {
    "name": "Intel: workday (external)",
    "company": "Intel",
    "ok": true,
    "rows": 453,
-   "secs": 31.4
+   "secs": 32.6
   },
   {
    "name": "Texas Instruments: oracle (CX)",
    "company": "Texas Instruments",
    "ok": true,
    "rows": 203,
-   "secs": 3.2
+   "secs": 2.9
   },
   {
    "name": "Texas Instruments: oracle (CX_1)",
@@ -34,98 +34,98 @@
    "company": "Applied Materials",
    "ok": true,
    "rows": 522,
-   "secs": 34.5
+   "secs": 34.6
   },
   {
    "name": "Lam Research: eightfold (careers.lamresearch.com)",
    "company": "Lam Research",
    "ok": true,
    "rows": 8,
-   "secs": 3.4
+   "secs": 3.1
   },
   {
    "name": "KLA: workday (UR)",
    "company": "KLA",
    "ok": true,
    "rows": 116,
-   "secs": 6.0
+   "secs": 6.2
   },
   {
    "name": "KLA: workday (Search)",
    "company": "KLA",
    "ok": true,
    "rows": 484,
-   "secs": 32.6
+   "secs": 28.5
   },
   {
    "name": "ASML: workday (asmlext1)",
    "company": "ASML",
    "ok": true,
-   "rows": 428,
-   "secs": 29.8
+   "rows": 429,
+   "secs": 32.7
   },
   {
    "name": "Teradyne: successfactors (jobs.teradyne.com)",
    "company": "Teradyne",
    "ok": true,
    "rows": 13,
-   "secs": 1.6
+   "secs": 1.7
   },
   {
    "name": "Keysight: jibe (jobs.keysight.com)",
    "company": "Keysight",
    "ok": true,
    "rows": 165,
-   "secs": 1.4
+   "secs": 2.0
   },
   {
    "name": "Analog Devices: workday (External)",
    "company": "Analog Devices",
    "ok": true,
    "rows": 499,
-   "secs": 27.5
+   "secs": 26.6
   },
   {
    "name": "Microchip: workday (External)",
    "company": "Microchip",
    "ok": true,
    "rows": 408,
-   "secs": 27.1
+   "secs": 28.4
   },
   {
    "name": "onsemi: oracle (CX_1001)",
    "company": "onsemi",
    "ok": true,
    "rows": 201,
-   "secs": 3.0
+   "secs": 2.9
   },
   {
    "name": "Silicon Labs: workday (SiliconlabsCareers)",
    "company": "Silicon Labs",
    "ok": true,
    "rows": 86,
-   "secs": 5.4
+   "secs": 5.7
   },
   {
    "name": "GlobalFoundries: workday (External)",
    "company": "GlobalFoundries",
    "ok": true,
    "rows": 404,
-   "secs": 25.6
+   "secs": 31.0
   },
   {
    "name": "FormFactor: workday (FFI-Careers)",
    "company": "FormFactor",
    "ok": true,
    "rows": 183,
-   "secs": 12.2
+   "secs": 18.4
   },
   {
    "name": "Astera Labs: greenhouse (asteralabs)",
    "company": "Astera Labs",
    "ok": true,
    "rows": 182,
-   "secs": 0.6
+   "secs": 0.4
   },
   {
    "name": "Astera Labs: greenhouse (asteraearlycareer2026)",
@@ -139,14 +139,14 @@
    "company": "Astera Labs",
    "ok": true,
    "rows": 82,
-   "secs": 0.3
+   "secs": 0.2
   },
   {
    "name": "Cadence: workday (External_Careers)",
    "company": "Cadence",
    "ok": true,
    "rows": 368,
-   "secs": 20.9
+   "secs": 22.8
   },
   {
    "name": "Cadence: workday (Univ_Careers)",
@@ -170,116 +170,123 @@
    "secs": 1.2
   },
   {
+   "name": "Siemens EDA (Mentor): avature (jobs.siemens.com)",
+   "company": "Siemens EDA (Mentor)",
+   "ok": true,
+   "rows": 0,
+   "secs": 10.4
+  },
+  {
    "name": "Arrow Electronics: workday (AC)",
    "company": "Arrow Electronics",
    "ok": true,
    "rows": 383,
-   "secs": 34.8
+   "secs": 35.6
   },
   {
    "name": "Avnet: workday (external)",
    "company": "Avnet",
    "ok": true,
    "rows": 312,
-   "secs": 25.7
+   "secs": 31.3
   },
   {
    "name": "Marvell: workday (MarvellCareers)",
    "company": "Marvell",
    "ok": true,
    "rows": 280,
-   "secs": 21.7
+   "secs": 28.9
   },
   {
    "name": "Marvell: workday (MarvellCareers2)",
    "company": "Marvell",
    "ok": true,
    "rows": 47,
-   "secs": 3.7
+   "secs": 6.1
   },
   {
    "name": "Rivian: jibe (careers.rivian.com)",
    "company": "Rivian",
    "ok": true,
    "rows": 57,
-   "secs": 1.1
+   "secs": 1.5
   },
   {
    "name": "Rivian: ashby (rivianvw.tech)",
    "company": "Rivian",
    "ok": true,
    "rows": 143,
-   "secs": 0.3
+   "secs": 0.2
   },
   {
    "name": "AMD: jibe (careers.amd.com)",
    "company": "AMD",
    "ok": true,
    "rows": 200,
-   "secs": 2.2
+   "secs": 3.0
   },
   {
    "name": "NVIDIA: workday (NVIDIAExternalCareerSite)",
    "company": "NVIDIA",
    "ok": true,
    "rows": 550,
-   "secs": 37.1
+   "secs": 39.6
   },
   {
    "name": "Qualcomm: eightfold (careers.qualcomm.com)",
    "company": "Qualcomm",
    "ok": true,
    "rows": 25,
-   "secs": 7.4
+   "secs": 7.2
   },
   {
    "name": "Infineon: eightfold (jobs.infineon.com)",
    "company": "Infineon",
    "ok": true,
    "rows": 35,
-   "secs": 18.7
+   "secs": 21.4
   },
   {
    "name": "NXP: workday (careers)",
    "company": "NXP",
    "ok": true,
    "rows": 484,
-   "secs": 38.3
+   "secs": 41.9
   },
   {
    "name": "Renesas: smartrecruiters (RenesasElectronics)",
    "company": "Renesas",
    "ok": true,
    "rows": 170,
-   "secs": 1.0
+   "secs": 1.1
   },
   {
    "name": "Monolithic Power Systems: workday (MPS_Careers)",
    "company": "Monolithic Power Systems",
    "ok": true,
    "rows": 235,
-   "secs": 11.9
+   "secs": 10.8
   },
   {
    "name": "Allegro MicroSystems: workday (allegrocareers)",
    "company": "Allegro MicroSystems",
    "ok": true,
    "rows": 95,
-   "secs": 7.3
+   "secs": 6.0
   },
   {
    "name": "Qorvo: successfactors (careers.qorvo.com)",
    "company": "Qorvo",
    "ok": true,
    "rows": 16,
-   "secs": 1.1
+   "secs": 1.5
   },
   {
    "name": "Skyworks: successfactors (careers.skyworksinc.com)",
    "company": "Skyworks",
    "ok": true,
    "rows": 135,
-   "secs": 15.1
+   "secs": 20.6
   },
   {
    "name": "Power Integrations: jobvite (power-integrations)",
@@ -293,35 +300,35 @@
    "company": "Semtech",
    "ok": true,
    "rows": 110,
-   "secs": 9.6
+   "secs": 17.0
   },
   {
    "name": "Semtech: workday (SemtechJobs)",
    "company": "Semtech",
    "ok": true,
    "rows": 5,
-   "secs": 1.2
+   "secs": 4.8
   },
   {
    "name": "Vicor: successfactors (careers.vicorpower.com)",
    "company": "Vicor",
    "ok": true,
    "rows": 20,
-   "secs": 1.0
+   "secs": 1.5
   },
   {
    "name": "SK hynix America: greenhouse (skhynixamerica)",
    "company": "SK hynix America",
    "ok": true,
    "rows": 55,
-   "secs": 0.2
+   "secs": 0.1
   },
   {
    "name": "Samsung Semiconductor US: workday (Samsung_Careers)",
    "company": "Samsung Semiconductor US",
    "ok": true,
    "rows": 402,
-   "secs": 41.8
+   "secs": 44.1
   },
   {
    "name": "Samsung Semiconductor US: greenhouse (samsungresearchamericainternship)",
@@ -335,21 +342,21 @@
    "company": "Samsung Semiconductor US",
    "ok": true,
    "rows": 64,
-   "secs": 0.3
+   "secs": 0.2
   },
   {
    "name": "Western Digital: smartrecruiters (WesternDigital)",
    "company": "Western Digital",
    "ok": true,
    "rows": 109,
-   "secs": 1.0
+   "secs": 1.4
   },
   {
    "name": "Seagate: successfactors (seagatecareers.com)",
    "company": "Seagate",
    "ok": true,
-   "rows": 88,
-   "secs": 14.1
+   "rows": 86,
+   "secs": 15.9
   },
   {
    "name": "Solidigm: smartrecruiters (Solidigm)",
@@ -370,140 +377,140 @@
    "company": "Rambus",
    "ok": true,
    "rows": 30,
-   "secs": 2.6
+   "secs": 3.3
   },
   {
    "name": "Broadcom: workday (External_Career)",
    "company": "Broadcom",
    "ok": true,
    "rows": 324,
-   "secs": 12.9
+   "secs": 15.3
   },
   {
    "name": "Cisco (Silicon One): workday (cisco_careers)",
    "company": "Cisco (Silicon One)",
    "ok": true,
    "rows": 491,
-   "secs": 19.3
+   "secs": 17.1
   },
   {
    "name": "Arista Networks: smartrecruiters (AristaNetworks)",
    "company": "Arista Networks",
    "ok": true,
    "rows": 110,
-   "secs": 1.0
+   "secs": 0.9
   },
   {
    "name": "Coherent: oracle (CX_1)",
    "company": "Coherent",
    "ok": true,
    "rows": 106,
-   "secs": 2.4
+   "secs": 2.8
   },
   {
    "name": "Lumentum: workday (LITE)",
    "company": "Lumentum",
    "ok": true,
    "rows": 261,
-   "secs": 19.0
+   "secs": 17.3
   },
   {
    "name": "Arm: talentbrew (careers.arm.com)",
    "company": "Arm",
    "ok": true,
    "rows": 161,
-   "secs": 2.2
+   "secs": 3.2
   },
   {
    "name": "SiFive: workday (sifivecareers)",
    "company": "SiFive",
    "ok": true,
    "rows": 126,
-   "secs": 7.4
+   "secs": 7.6
   },
   {
    "name": "Onto Innovation: workday (onto_careers)",
    "company": "Onto Innovation",
    "ok": true,
    "rows": 198,
-   "secs": 10.8
+   "secs": 11.0
   },
   {
    "name": "Axcelis: workday (axcelis)",
    "company": "Axcelis",
    "ok": true,
    "rows": 76,
-   "secs": 6.3
+   "secs": 6.5
   },
   {
    "name": "Veeco: successfactors (careers.veeco.com)",
    "company": "Veeco",
    "ok": true,
    "rows": 17,
-   "secs": 1.2
+   "secs": 1.6
   },
   {
    "name": "Kulicke & Soffa: oracle (CX_1)",
    "company": "Kulicke & Soffa",
    "ok": true,
    "rows": 18,
-   "secs": 2.0
+   "secs": 2.1
   },
   {
    "name": "Azenta / Brooks Automation: workday (Brooks_External_Site)",
    "company": "Azenta / Brooks Automation",
    "ok": true,
    "rows": 106,
-   "secs": 8.1
+   "secs": 8.6
   },
   {
    "name": "MKS Instruments: workday (MKSCareersUniversity)",
    "company": "MKS Instruments",
    "ok": true,
    "rows": 7,
-   "secs": 1.2
+   "secs": 1.5
   },
   {
    "name": "Entegris: workday (entegriscareers)",
    "company": "Entegris",
    "ok": true,
    "rows": 431,
-   "secs": 26.5
+   "secs": 26.8
   },
   {
    "name": "Advanced Energy: successfactors (jobs.advanced-energy.com)",
    "company": "Advanced Energy",
    "ok": true,
    "rows": 13,
-   "secs": 1.3
+   "secs": 1.7
   },
   {
    "name": "Cohu: oracle (CX_1)",
    "company": "Cohu",
    "ok": true,
    "rows": 34,
-   "secs": 1.5
+   "secs": 1.6
   },
   {
    "name": "Tektronix: eightfold (ralliant.eightfold.ai)",
    "company": "Tektronix",
    "ok": true,
    "rows": 32,
-   "secs": 3.5
+   "secs": 2.4
   },
   {
    "name": "National Instruments (Emerson): oracle (CX_1)",
    "company": "National Instruments (Emerson)",
    "ok": true,
    "rows": 327,
-   "secs": 6.4
+   "secs": 6.9
   },
   {
    "name": "Integra Technologies: greenhouse (integrainterns)",
    "company": "Integra Technologies",
    "ok": true,
    "rows": 8,
-   "secs": 0.1
+   "secs": 0.2
   },
   {
    "name": "Integra Technologies: greenhouse (integra)",
@@ -517,28 +524,28 @@
    "company": "Digi-Key",
    "ok": true,
    "rows": 20,
-   "secs": 1.5
+   "secs": 1.4
   },
   {
    "name": "Lucid Motors: greenhouse (lucidmotors)",
    "company": "Lucid Motors",
    "ok": true,
    "rows": 436,
-   "secs": 1.2
+   "secs": 0.8
   },
   {
    "name": "Ambarella: workday (ambarella)",
    "company": "Ambarella",
    "ok": true,
    "rows": 35,
-   "secs": 1.4
+   "secs": 2.1
   },
   {
    "name": "indie Semiconductor: greenhouse (indiesemiconductor)",
    "company": "indie Semiconductor",
    "ok": true,
    "rows": 22,
-   "secs": 0.2
+   "secs": 0.1
   },
   {
    "name": "Tenstorrent: greenhouse (tenstorrentuniversity)",
@@ -552,98 +559,98 @@
    "company": "Cerebras",
    "ok": true,
    "rows": 117,
-   "secs": 0.6
+   "secs": 0.1
   },
   {
    "name": "SambaNova: greenhouse (sambanovasystems)",
    "company": "SambaNova",
    "ok": true,
    "rows": 63,
-   "secs": 0.3
+   "secs": 0.2
   },
   {
    "name": "Polar Semiconductor: workday (Polar)",
    "company": "Polar Semiconductor",
    "ok": true,
    "rows": 27,
-   "secs": 2.0
+   "secs": 2.2
   },
   {
    "name": "Bosch Roseville (semi): smartrecruiters (BoschGroup)",
    "company": "Bosch Roseville (semi)",
    "ok": true,
    "rows": 200,
-   "secs": 1.1
+   "secs": 1.2
   },
   {
    "name": "Edwards Vacuum: workday (edwardscareers)",
    "company": "Edwards Vacuum",
    "ok": true,
    "rows": 342,
-   "secs": 22.8
+   "secs": 24.0
   },
   {
    "name": "Air Liquide Electronics: workday (AirLiquideExternalCareer)",
    "company": "Air Liquide Electronics",
    "ok": true,
    "rows": 512,
-   "secs": 41.7
+   "secs": 44.3
   },
   {
    "name": "Waymo: greenhouse (waymo)",
    "company": "Waymo",
    "ok": true,
    "rows": 362,
-   "secs": 0.5
+   "secs": 0.3
   },
   {
    "name": "Zoox: lever (zoox)",
    "company": "Zoox",
    "ok": true,
    "rows": 229,
-   "secs": 0.6
+   "secs": 0.3
   },
   {
    "name": "Nuro: greenhouse (nuro)",
    "company": "Nuro",
    "ok": true,
    "rows": 104,
-   "secs": 0.3
+   "secs": 0.2
   },
   {
    "name": "Aeva: lever (aeva)",
    "company": "Aeva",
    "ok": true,
    "rows": 42,
-   "secs": 0.4
+   "secs": 0.3
   },
   {
    "name": "Aptiv: workday (aptiv_careers)",
    "company": "Aptiv",
    "ok": true,
    "rows": 438,
-   "secs": 31.2
+   "secs": 31.4
   },
   {
    "name": "ZF North America: successfactors (jobs.zf.com)",
    "company": "ZF North America",
    "ok": true,
    "rows": 6,
-   "secs": 2.4
+   "secs": 3.0
   },
   {
    "name": "Tokyo Electron: workday (tel-careers)",
    "company": "Tokyo Electron",
    "ok": true,
    "rows": 45,
-   "secs": 6.4
+   "secs": 6.8
   },
   {
    "name": "Cirrus Logic: lever (cirrus)",
    "company": "Cirrus Logic",
    "ok": true,
    "rows": 124,
-   "secs": 1.6
+   "secs": 1.9
   },
   {
    "name": "Simplify Summer 2027 + off-season",
