@@ -14,18 +14,34 @@ After that it refreshes nightly at 5am Eastern. To refresh now: Actions > Nightl
 
 ## Files
 - `collector/collect.py`: nightly run. Repos + official career sites, filters, dedupes, writes `data/listings.json` and `data/sources.json` (feed health).
-- `collector/discover_sources.py`: finds a company's career-site feed from Simplify apply links. Run after adding companies.
+- `collector/discover_sources.py`: finds career-site feeds from Simplify apply links for companies marked `"auto": true`.
 - `config/companies.json`: your company list (tier, segment, notes, feeds). Defense and national labs removed.
 - `config/sources.json`: which GitHub repos to read.
 - `index.html`: the dashboard.
 
 ## Status of the career-site feeds
-The first seed was built from the GitHub repos only (the sandbox it was built in could not reach company sites). After your first Action run, the header shows any failing feeds.
-- **Seen in real apply links (should work):** Workday sites (Micron, Intel, Marvell, NVIDIA, ADI, Microchip, KLA, AMAT, ASML, GF, NXP, Cadence, Arrow, Avnet, MPS, SiFive, Samsung, and more), Greenhouse (Astera, SK hynix), SmartRecruiters (WD, Sandisk, Solidigm, Kioxia), Oracle (TI, onsemi), Eightfold (Qualcomm).
-- **Endpoint untested:** Teradyne (SuccessFactors), AMD / Keysight / Rivian (iCIMS-backed sites), `asteraearlycareer2027` board.
-- **No direct feed yet (repos only):** Lam, Silicon Labs, Synopsys, Siemens EDA, ST, Infineon, Arm, Credo, Power Integrations, FormFactor, SkyWater, TSMC AZ, others.
+As of 2026-10-06: 81 of 134 companies have an official feed; all of them except Siemens EDA passed a live test. The dashboard header shows any feed that fails in the nightly run. Companies without a feed still appear through the GitHub repos.
 
-Hand this to Claude Code: "Run `python collector/collect.py`, fix any failing adapters in data/sources.json, and add career-site feeds for the companies with none."
+**Working feeds, by site type**
+- **Workday:** Micron, Intel, AMAT, KLA, ASML, ADI, Microchip, GlobalFoundries, Cadence, Arrow, Avnet, Marvell, NVIDIA, NXP, MPS, Allegro, Semtech, Samsung, Cisco, Lumentum, SiFive, Onto, Axcelis, Azenta, MKS, Entegris, Ambarella, Polar, Edwards, Air Liquide, Aptiv, Tokyo Electron, Broadcom, Silicon Labs, FormFactor, Digi-Key
+- **Eightfold:** Qualcomm, Lam Research, Infineon, Tektronix (Ralliant)
+- **SuccessFactors:** Teradyne, Skyworks, Qorvo, Seagate, Advanced Energy, Vicor, Veeco, ZF
+- **Oracle:** TI, onsemi, Coherent, Kulicke & Soffa, Cohu, NI
+- **Greenhouse / Lever / Ashby:** Astera Labs, SK hynix, Integra, Lucid, Tenstorrent, Waymo, Nuro, SambaNova, indie, Zoox, Aeva, Cirrus Logic (Lever EU), Rivian, Cerebras
+- **SmartRecruiters:** Renesas, Western Digital, Solidigm, Kioxia, Arista, Bosch Roseville
+- **Other:** AMD, Keysight, Rivian (iCIMS-backed Jibe), Synopsys and Arm (TalentBrew), Rambus (iCIMS), Power Integrations (Jobvite)
+- **Untested:** Siemens EDA (Avature, keeps titles containing "EDA"). It failed a certificate check on the PC used to set it up; check the dashboard after a nightly run.
+
+**No feed, and why**
+- **Turned off on purpose:** Juniper (Simplify linked a different company's board; Juniper is now part of HPE, whose feed would label all HPE jobs as Juniper). Sandisk (its SmartRecruiters board is correct but has 0 postings; restore `{"type": "smartrecruiters", "company": "Sandisk"}` when it posts).
+- **Blocks scripts or login-only:** Apple, Tesla, IBM (bot challenge), Mobileye, Luminar, Aurora
+- **Wrong company under the same name:** Nova, Nordic Semiconductor (`nordic` on Workday is Nordic Consulting), DuPont Electronics (now Qnity; `dupont` is DuPont proper), Tower Semiconductor
+- **Absorbed:** Ansys (Synopsys), Alphawave (Qualcomm), Untether AI (AMD), Richardson RFPD (Arrow)
+- **Workday account found, site name unknown:** Wolfspeed (`cree` tenant on wd108), TTI, Lattice (its iCIMS site is gone), Silvaco
+- **No machine-readable job site found:** SkyWater, TSMC Arizona, ST, Diodes, Navitas, Credo, Mouser, Amkor, ASE, MACOM, Ampere, Groq, Ambiq, Advantest, UCT, Ichor, Rohde & Schwarz, MediaTek, Ouster, Imagination, X-FAB, EV Group, Camtek, SUSS MicroTec, Linde, Shin-Etsu, SUMCO, Element Solutions, Chroma ATE, Deca, Promex, Future Electronics
+- **Duplicate:** Bosch (semiconductor/auto) would reuse Bosch Roseville's `BoschGroup` board and list every job twice
+
+**Adding companies:** give a new entry `"auto": true` and run `python collector/discover_sources.py`; it fills feeds from Simplify apply links. Entries without `"auto"` (including `"sources": []`) are never changed.
 
 ## Tuning
 - Lanes and filters: regexes in `collector/common.py` (`SALES`, `SWE`, `HW`, `OFFTRACK`, `DEFENSE`).

@@ -276,10 +276,43 @@ def a_jobvite(s):
     return rows
 
 
+def a_avature(s):
+    """Avature portals (jobs.siemens.com/en_US/externaljobs). Optional "title_filter" regex keeps one business
+    out of a shared portal (Siemens EDA titles carry 'EDA'). Raises if the page has no job links, so a markup
+    change shows up as a failing feed instead of 0 rows."""
+    base = f"https://{s['host']}/{s['portal'].strip('/')}"
+    keep = re.compile(s["title_filter"]) if s.get("title_filter") else None
+    rows, seen = [], set()
+    for q in QUERIES:
+        for page in range(10):
+            h = http(f"{base}/SearchJobs/?search={quote(q)}&jobRecordsPerPage=50&jobOffset={page * 50}",
+                     headers={"Accept": "text/html"})
+            links = re.findall(r'<a[^>]+href="([^"]*/JobDetail/[^"]*)"[^>]*>(.*?)</a>', h, re.S)
+            if page == 0 and q == QUERIES[0] and "/JobDetail/" not in h:
+                raise ValueError("no Avature JobDetail links on the search page")
+            new = 0
+            for href, text in links:
+                title = strip_html(text)
+                url = href if href.startswith("http") else f"https://{s['host']}{href}"
+                if not title or title.lower() in ("apply", "view", "more", "read more") or url in seen:
+                    continue
+                seen.add(url)
+                new += 1
+                if keep and not keep.search(title):
+                    continue
+                after = h[h.find(href):][:1500]
+                loc = re.search(r'class="[^"]*location[^"]*"[^>]*>(.*?)</', after, re.S)
+                rows.append({"title": title, "location": strip_html(loc.group(1)) if loc else "", "url": url})
+            if not new:
+                break
+            time.sleep(0.3)
+    return rows
+
+
 ADAPTERS = {"workday": a_workday, "greenhouse": a_greenhouse, "smartrecruiters": a_smartrecruiters,
             "oracle": a_oracle, "eightfold": a_eightfold, "ashby": a_ashby, "lever": a_lever,
             "jibe": a_jibe, "successfactors": a_successfactors, "talentbrew": a_talentbrew,
-            "icims": a_icims, "jobvite": a_jobvite}
+            "icims": a_icims, "jobvite": a_jobvite, "avature": a_avature}
 
 
 def fetch_detail(d):

@@ -457,7 +457,16 @@
   "window": "Sep - Dec 2026",
   "gpa_floor": "",
   "bay_site": "Yes",
-  "notes": ""
+  "notes": "",
+  "sources": [
+   {
+    "type": "avature",
+    "host": "jobs.siemens.com",
+    "portal": "en_US/externaljobs",
+    "title_filter": "EDA",
+    "verified": "untested: TLS cert error on Ryan's PC; check in the Action"
+   }
+  ]
  },
  {
   "name": "Arrow Electronics",
