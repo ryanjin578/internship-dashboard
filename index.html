@@ -113,6 +113,13 @@ textarea{resize:vertical}
 .match ul{margin:6px 0 0;padding-left:18px}
 .match li{margin-bottom:6px}
 .err{color:var(--red);font-size:14px}
+.spinner{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-1px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{display:none}}
+.save-status{display:inline-flex;align-items:center;gap:5px;font-size:14px}
+.save-status svg{width:15px;height:15px;flex:none}
+.save-status.ok{color:var(--accent)}.save-status.bad{color:var(--red)}.save-status.dirty{color:var(--amber);font-weight:600}
+.saved-at{margin:-8px 0 0}
 .note{color:var(--muted);font-size:13px}
 .hist{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
 .src-bad{color:var(--red)}
@@ -181,6 +188,7 @@ function normalize(s){
   if(!Array.isArray(o.contacts)) o.contacts = [];
   const st = o.settings, g = st.goals;
   for(const k of ["apiKey","model","profile","resume","planned"]) if(typeof st[k] !== "string") st[k] = b.settings[k];
+  if(typeof st.savedAt !== "string") delete st.savedAt;
   st.followDays = Math.max(3, num(st.followDays, 14, 365));
   g.p1 = num(g.p1, 15, 200) || 15; g.all = num(g.all, 40, 200) || 40;
   for(const a of Object.values(o.analyses)){
@@ -190,7 +198,25 @@ function normalize(s){
   }
   return o;
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ alert("Could not save to browser storage: " + e.message); } }
+function persist(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function save(){ try{ persist(); }catch(e){ alert("Could not save to browser storage: " + e.message); } }
+/* Short, safe description of a storage failure (never echoes stored data). */
+function storageError(e){
+  if(e && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22)) return "storage full";
+  if(e && e.name === "SecurityError") return "browser storage is blocked";
+  return "couldn't write to browser storage";
+}
+function savedAgo(iso){
+  const t = iso ? new Date(iso) : null;
+  if(!t || isNaN(t)) return "Not saved yet";
+  const s = (Date.now() - t) / 1000;
+  if(s < 60) return "Last saved just now";
+  if(s < 3600) return `Last saved ${Math.floor(s / 60)} min ago`;
+  if(s < 86400) return `Last saved ${Math.floor(s / 3600)} h ago`;
+  return "Last saved " + t.toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+}
+const ICON_CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICON_X = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 
 /* ---------- helpers ---------- */
 const $ = (s, el=document) => el.querySelector(s);
@@ -449,12 +475,19 @@ function jdBlock(key){
 function wireJd(key){ const t = $("#jdPaste"); if(t) t.onchange = e => { S.jds[key] = e.target.value; save(); }; }
 
 /* ---------- drawer ---------- */
+// A drawer can set these: guard returns false to keep it open, cleanup runs when it closes or is replaced.
+let drawerGuard = null, drawerCleanup = null;
+function resetDrawerHooks(){ const c = drawerCleanup; drawerGuard = drawerCleanup = null; if(c) c(); }
 function openDrawer(html){
+  if(drawerGuard && !drawerGuard()) return false;
+  resetDrawerHooks();
   const d = $("#drawer"); d.innerHTML = `<button class="btn small close" id="closeD">Close</button>` + html;
   d.classList.add("open"); d.setAttribute("aria-hidden","false"); $("#drawerBg").classList.add("open");
-  $("#closeD").onclick = closeDrawer; $("#closeD").focus();
+  $("#closeD").onclick = () => closeDrawer(); $("#closeD").focus();
+  return true;
 }
-function closeDrawer(){ $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden","true"); $("#drawerBg").classList.remove("open"); }
+function closeDrawer(){ if(drawerGuard && !drawerGuard()) return; forceCloseDrawer(); }
+function forceCloseDrawer(){ resetDrawerHooks(); $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden","true"); $("#drawerBg").classList.remove("open"); }
 $("#drawerBg").onclick = closeDrawer;
 document.addEventListener("keydown", e => { if(e.key === "Escape") closeDrawer(); });
 
@@ -608,7 +641,8 @@ function openSources(){
 /* ---------- settings, backup, calendar ---------- */
 function openSettings(){
   const st = S.settings, g = st.goals;
-  openDrawer(`<h2>Settings</h2><p class="sub">Everything here stays in this browser only.</p>
+  if(!openDrawer(`<h2>Settings</h2><p class="sub">Everything here stays in this browser only.</p>
+   <div id="sForm">
    <h3>Claude matching</h3>
    <div class="kv"><label for="sKey">API key</label><input id="sKey" type="password" value="${esc(st.apiKey)}" placeholder="sk-ant-..." autocomplete="off">
     <label for="sModel">Model</label><select id="sModel">
@@ -623,17 +657,65 @@ function openSettings(){
     <label for="gAll">All applications</label><input id="gAll" type="number" min="1" value="${esc(g.all)}">
     <label for="gAllBy">by</label><input id="gAllBy" type="date" value="${esc(g.allBy)}">
     <label for="sFu">Follow up after</label><input id="sFu" type="number" min="3" value="${esc(st.followDays)}"></div>
-   <div class="actions"><button class="btn primary" id="sSave">Save settings</button><span class="note" id="sMsg"></span></div>
+   </div>
+   <div class="actions"><button class="btn primary" id="sSave">Save settings</button><span class="save-status" id="sMsg" role="status" aria-live="polite"></span></div>
+   <p class="note saved-at" id="sAt"></p>
    <h3>Calendar</h3><p class="note">Exports deadlines only. In Google Calendar, create a calendar named Internships, then import this file into it so you can hide it anytime.</p>
    <div class="actions"><button class="btn" id="ics">Download deadlines (.ics)</button></div>
    <h3>Backup</h3><p class="note">Browser data disappears if site data is cleared. Back up weekly.</p>
-   <div class="actions"><button class="btn" id="exp2">Download backup</button><button class="btn" id="imp">Restore from backup</button></div>`);
-  $("#sModel").value = st.model;
-  $("#sSave").onclick = () => {
-    Object.assign(st, {apiKey:$("#sKey").value.trim(), model:$("#sModel").value, profile:$("#sProfile").value, resume:$("#sResume").value, planned:$("#sPlanned").value,
-      followDays:Math.min(365, Math.max(3, Math.round(+$("#sFu").value) || 14))});
-    Object.assign(g, {p1:Math.min(200, Math.round(+$("#gP1").value) || 15), p1By:$("#gP1By").value, all:Math.min(200, Math.round(+$("#gAll").value) || 40), allBy:$("#gAllBy").value});
-    save(); renderGoals(); render(); $("#sMsg").textContent = "Saved.";
+   <div class="actions"><button class="btn" id="exp2">Download backup</button><button class="btn" id="imp">Restore from backup</button></div>`)) return;
+  $("#sModel").value = st.model; if(!$("#sModel").value) $("#sModel").selectedIndex = 0;
+  const FIELDS = ["sKey","sModel","sProfile","sResume","sPlanned","gP1","gP1By","gAll","gAllBy","sFu"];
+  const formNow = () => FIELDS.map(id => $("#" + id).value);
+  let baseline = formNow();
+  const isDirty = () => formNow().some((v, k) => v !== baseline[k]);
+  const status = (cls, html) => { const m = $("#sMsg"); m.className = "save-status " + cls; m.innerHTML = html; };
+  const refreshDirty = () => {
+    if(isDirty()) status("dirty", "Unsaved changes");
+    else if($("#sMsg").classList.contains("dirty")) status("", "");
+  };
+  const showAt = () => { $("#sAt").textContent = savedAgo(st.savedAt); };
+  $("#sForm").oninput = $("#sForm").onchange = refreshDirty;
+  showAt();
+  const timer = setInterval(showAt, 30000);
+  drawerCleanup = () => clearInterval(timer);
+  drawerGuard = () => !isDirty() || confirm("You have unsaved settings changes. Close without saving?");
+
+  // Reads storage back and compares every setting with the form. Never shows or logs the API key.
+  const verify = () => {
+    const raw = localStorage.getItem(KEY);
+    if(raw === null) return "nothing was stored";
+    const saved = (JSON.parse(raw) || {}).settings || {}, sg = saved.goals || {};
+    const want = [["apiKey", saved.apiKey, $("#sKey").value], ["model", saved.model, $("#sModel").value],
+      ["About you", saved.profile, $("#sProfile").value], ["resume", saved.resume, $("#sResume").value],
+      ["planned work", saved.planned, $("#sPlanned").value], ["follow-up days", saved.followDays, +$("#sFu").value],
+      ["P1 goal", sg.p1, +$("#gP1").value], ["P1 date", sg.p1By, $("#gP1By").value],
+      ["applications goal", sg.all, +$("#gAll").value], ["applications date", sg.allBy, $("#gAllBy").value],
+      ["save time", saved.savedAt, st.savedAt]];
+    const bad = want.find(([, a, b]) => a !== b);
+    return bad ? `stored ${bad[0] === "apiKey" ? "API key" : bad[0]} doesn't match` : null;
+  };
+  $("#sSave").onclick = async () => {
+    const btn = $("#sSave"), t0 = performance.now(), prevAt = st.savedAt;
+    btn.disabled = true; btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>Saving…`; status("", "");
+    let err = null, snap = null;
+    try{
+      Object.assign(st, {apiKey:$("#sKey").value.trim(), model:$("#sModel").value, profile:$("#sProfile").value, resume:$("#sResume").value, planned:$("#sPlanned").value,
+        followDays:Math.min(365, Math.max(3, Math.round(+$("#sFu").value) || 14))});
+      Object.assign(g, {p1:Math.min(200, Math.round(+$("#gP1").value) || 15), p1By:$("#gP1By").value, all:Math.min(200, Math.round(+$("#gAll").value) || 40), allBy:$("#gAllBy").value});
+      // show the cleaned-up values, so the form matches what gets stored
+      $("#sKey").value = st.apiKey; $("#sFu").value = st.followDays; $("#gP1").value = g.p1; $("#gAll").value = g.all;
+      snap = formNow();
+      st.savedAt = new Date().toISOString();
+      persist();
+      err = verify();
+    }catch(e){ err = storageError(e); }
+    if(err) st.savedAt = prevAt;
+    await new Promise(r => setTimeout(r, Math.max(0, 400 - (performance.now() - t0))));  // keep the spinner visible
+    btn.disabled = false; btn.textContent = "Save settings";
+    if(err){ status("bad", ICON_X + esc("Save failed: " + err)); }
+    else{ baseline = snap; status("ok", ICON_CHECK + "Saved"); refreshDirty(); renderGoals(); render(); }
+    showAt();
   };
   $("#ics").onclick = exportIcs; $("#exp2").onclick = exportBackup; $("#imp").onclick = () => $("#importFile").click();
 }
@@ -654,7 +736,7 @@ function exportIcs(){
 $("#importFile").onchange = async e => {
   const f = e.target.files[0]; if(!f) return;
   try{ const data = JSON.parse(await f.text()); if(!data.items) throw new Error("Not a backup file.");
-    const key = S.settings.apiKey; S = normalize(data); S.settings.apiKey = key || S.settings.apiKey; save(); renderGoals(); render(); closeDrawer(); alert("Backup restored."); }
+    const key = S.settings.apiKey; S = normalize(data); S.settings.apiKey = key || S.settings.apiKey; save(); renderGoals(); render(); forceCloseDrawer(); alert("Backup restored."); }
   catch(err){ alert("Restore failed: " + err.message); }
   e.target.value = "";
 };
