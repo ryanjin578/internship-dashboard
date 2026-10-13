@@ -459,7 +459,6 @@ function renderBoard(){
     <header><h2>Apply later</h2><span class="count">${items.length} roles, ${applied().length} applied</span>
       <select class="status-select" id="sortItems" aria-label="Sort"><option value="urgency">Most urgent first</option><option value="match"${ui.sortItems==="match"?" selected":""}>Best match first</option></select>
       <button class="btn small" id="matchAll">Match all with Claude</button><span class="save-status" id="matchAllMsg" role="status" aria-live="polite"></span>
-      <button class="btn small" id="addManual">Add role</button>
       ${items.some(isStale) ? `<button class="btn small" id="cleanUp">Clean up ${items.filter(isStale).length} closed</button>` : ""}</header>
     ${fu.cs.length ? `<div class="filters">${fu.cs.map(c => `<span class="chip due" data-contact="${esc(c.id)}" style="cursor:pointer">Follow up: ${esc(c.name)} (${esc(c.company)})</span>`).join("")}</div>` : ""}
     ${items.length ? `<table><thead><tr><th>Role</th><th>Status</th><th>Due</th><th>Match</th></tr></thead><tbody>
@@ -469,7 +468,6 @@ function renderBoard(){
   </div>`;
   $("#sortItems").onchange = e => { ui.sortItems = e.target.value; render(); };
   $("#matchAll").onclick = matchAll;
-  $("#addManual").onclick = () => openItem(null);
   if($("#cleanUp")) $("#cleanUp").onclick = openCleanup;
   $("#main").querySelectorAll("tr.row").forEach(tr => tr.onclick = e => { if(e.target.tagName !== "SELECT") openItem(tr.dataset.id); });
   $("#main").querySelectorAll("select[data-status]").forEach(s => s.onchange = e => setStatus(s.dataset.status, e.target.value));
@@ -520,7 +518,7 @@ function feedPanel(wide){
   const tog = (k, label) => `<button class="toggle" data-tog="${k}" aria-pressed="${!!f[k]}">${label}</button>`;
   const lane = k => `<button class="toggle" data-lane="${k}" aria-pressed="${f.lanes.has(k)}"><span class="lane ${k}"></span>${LANES[k]}</button>`;
   return `<section class="panel">
-   <header><h2>${wide ? "All openings" : "Openings"}</h2><span class="count">${list.length} match these filters</span></header>
+   <header><h2>${wide ? "All openings" : "Openings"}</h2><span class="count">${list.length} match these filters</span>${wide ? `<button class="btn small" id="addManual">Add role</button>` : ""}</header>
    <div class="filters"><input type="search" id="feedQ" placeholder="Search company, role, city" value="${esc(f.q)}" aria-label="Search openings">
      ${lane("sales")}${lane("swe")}${lane("hw")}${tog("bay","Bay Area")}${tog("tier","P1 and P2")}${tog("clean","No flags")}${tog("fresh","New since last visit")}
      <select class="status-select" id="coop" aria-label="Term"><option value="all">Any term</option><option value="summer"${f.coop==="summer"?" selected":""}>Summer 2027</option><option value="off"${f.coop==="off"?" selected":""}>Co-op and off-season</option></select></div>
@@ -545,6 +543,7 @@ function wireFeed(){
   m.querySelectorAll("[data-lane]").forEach(b => b.onclick = () => { const k = b.dataset.lane; f.lanes.has(k) ? f.lanes.delete(k) : f.lanes.add(k); render(); });
   const c = $("#coop"); if(c) c.onchange = e => { f.coop = e.target.value; render(); };
   const mo = $("#more"); if(mo) mo.onclick = () => { f.limit += 60; render(); };
+  const ad = $("#addManual"); if(ad) ad.onclick = () => openItem(null);
   m.querySelectorAll(".feed li[data-lid]").forEach(li => li.onclick = e => {
     if(e.target.dataset.add){ e.stopPropagation(); saveListing(e.target.dataset.add); return; }
     openListing(li.dataset.lid);
