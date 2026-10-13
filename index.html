@@ -481,6 +481,8 @@ function itemRow(i){
   const closed = (l && l.status === "closed") || i.closedOn ? `<span class="chip flag">Posting closed</span>` : "";
   let due = "";
   if(i.deadline){ const d = days(today(), i.deadline); due = `<span class="chip ${d<=7 && d>=0 ? "due":""}">${fmt(i.deadline)}${d<0?" (passed)":""}</span>`; }
+  const co = i.status === "Saved" && coByName(i.company), cd = co && companyDeadline(co);  // the company's stated or last-year date, as a hint
+  if(cd && cd.main !== "Rolling") due += `<div class="sub" title="From the Companies tab">${!i.deadline && cd.soon ? `<span class="chip due">${esc(cd.main)}</span>` : esc(cd.main)} ${esc(cd.sub.toLowerCase())}</div>`;
   if(quiet !== null && quiet >= S.settings.followDays) due += `<span class="chip due">Quiet ${quiet}d</span>`;
   return `<tr class="row" data-id="${esc(i.id)}"><td><span class="lane ${esc(i.lane)}"></span><span class="co">${esc(i.company)}</span><span class="tier">${esc(tierOf(i.company))}</span>
      <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
@@ -949,6 +951,10 @@ function timingOf(c){
 function deadlineOf(c){
   const mine = Object.values(S.items).filter(i => i.company === c.name && i.status === "Saved" && i.deadline && i.deadline >= today()).map(i => i.deadline).sort()[0];
   if(mine) return {main: fmt(mine), sub: `Your saved role, ${dueIn(mine)}`, soon: days(today(), mine) <= 7};
+  return companyDeadline(c);
+}
+/* The company's own date: one it stated, else when last year's postings closed (shifted to this year). */
+function companyDeadline(c){
   if(c.deadline) return {main: fmt(c.deadline), sub: c.deadline < today() ? "Stated, passed" : `Stated, ${dueIn(c.deadline)}`, soon: c.deadline >= today() && days(today(), c.deadline) <= 7};
   if(c.last_cycle && c.last_cycle.closed){
     const d = nextYear(c.last_cycle.closed);
