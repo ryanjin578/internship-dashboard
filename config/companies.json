@@ -2352,7 +2352,13 @@
   "gpa_floor": "",
   "bay_site": "Yes",
   "notes": "",
-  "sources": []
+  "sources": [
+   {
+    "company": "Sandisk",
+    "type": "smartrecruiters",
+    "verified": "seen in Simplify apply links; API answers, 0 postings on 2026-10-12"
+   }
+  ]
  },
  {
   "name": "IBM",
@@ -2365,7 +2371,7 @@
   "window": "",
   "gpa_floor": "",
   "bay_site": "",
-  "notes": "Pursuing Technical Sales Engineer Intern + Co-Op (Entry-Level Sales Program 2027)."
+  "notes": "Pursuing Technical Sales Engineer Intern + Co-Op (Entry-Level Sales Program 2027). Careers site (ibmglobal.avature.net) blocks scripts: check by hand."
  },
  {
   "name": "Tokyo Electron",
