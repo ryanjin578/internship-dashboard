@@ -137,6 +137,15 @@ textarea{resize:vertical}
 .src-bad{color:var(--red)}
 .nowrap{white-space:nowrap}
 .src{display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap}.src svg{width:14px;height:14px;flex:none}
+.banner{padding:10px 24px;background:var(--amber-soft);color:var(--amber);border-bottom:1px solid var(--rule);font-size:14px}
+.banner:empty{display:none}
+.changes{border:1px solid var(--amber);border-radius:var(--r-md);padding:12px 14px;background:var(--amber-soft);margin:14px 0}
+.changes h3{margin:0 0 6px}
+.changes ul{margin:0 0 8px;padding-left:18px}
+.diff{font-size:13px;max-height:260px;overflow:auto;border:1px solid var(--rule);border-radius:var(--r-sm);padding:8px 10px;background:var(--raised);margin:6px 0}
+.diff p{margin:0 0 4px}
+.diff .del{color:var(--red);text-decoration:line-through}.diff .add{color:var(--accent)}
+.diff .del::before{content:"Removed: ";font-weight:600;text-decoration:none;display:inline-block}.diff .add::before{content:"Added: ";font-weight:600}
 
 @media (max-width:900px){.board{grid-template-columns:1fr}.goals{grid-template-columns:1fr 1fr}.feed{max-height:none}.top{flex-wrap:wrap}}
 </style>
@@ -149,6 +158,7 @@ textarea{resize:vertical}
   <button class="btn" id="exportBtn">Back up</button>
   <button class="btn" id="settingsBtn">Settings</button>
 </div>
+<div class="banner" id="banner" role="alert"></div>
 <section class="goals" id="goals"></section>
 <nav class="tabs" role="tablist" id="tabs">
   <button role="tab" data-tab="board" aria-selected="true">Board</button>
@@ -184,7 +194,7 @@ const SEEDS = [
   {company:"Western Digital", title:"Summer 2027 intern (firmware track)", location:"", lane:"swe", deadline:"2026-10-20", notes:"Two umbrella reqs (SWE + HW), firmware track in both. Apply to both."},
   {company:"IBM", title:"Technical Sales Engineer Intern", location:"", lane:"sales", notes:"Entry-Level Sales Program 2027. Also a Co-Op version."},
 ];
-const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, checked:{}, analyses:{}, jds:{}, jdsAt:{}, lastVisit:null, seeded:false,
+const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, checked:{}, analyses:{}, jds:{}, jdsAt:{}, snaps:{}, lastVisit:null, seeded:false,
   settings:{apiKey:"", model:"claude-haiku-4-5-20251001", profile:"Purdue sophomore, BS Integrated Business & Engineering (CODO to Computer Engineering in progress), graduating May 2029, US citizen, targets FAE / sales engineering first.",
     resume:"", planned:DEFAULT_PLANNED, followDays:14,
     goals:{p1:15, p1By:"2026-10-15", all:40, allBy:"2026-11-30"}}});
@@ -199,7 +209,8 @@ function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s) ret
 function normalize(s){
   const b = blank(), num = (v, d, max) => Math.min(max, Math.max(0, Math.round(Number(v)) || d));
   const o = {...b, ...s, settings:{...b.settings, ...s.settings, goals:{...b.settings.goals, ...(s.settings||{}).goals}}};
-  for(const k of ["items","hidden","companyNotes","checked","analyses","jds","jdsAt"]) if(!o[k] || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};
+  for(const k of ["items","hidden","companyNotes","checked","analyses","jds","jdsAt","snaps"]) if(!o[k] || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};
+  for(const [k, v] of Object.entries(o.snaps)) if(!v || typeof v !== "object" || !Array.isArray(v.flags) || !Array.isArray(v.tags)) delete o.snaps[k];
   if(!Array.isArray(o.contacts)) o.contacts = [];
   const st = o.settings, g = st.goals;
   for(const k of ["apiKey","model","profile","resume","planned"]) if(typeof st[k] !== "string") st[k] = b.settings[k];
@@ -302,9 +313,10 @@ const ICON_X = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
-const today = () => new Date().toISOString().slice(0,10);
+// Your local date. toISOString() is UTC, which is already tomorrow on a US evening and made deadlines look passed early.
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const days = (a, b=today()) => Math.round((new Date(b) - new Date(a)) / 864e5);
-const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+const addDays = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };  // UTC math: no DST shift
 const fmt = d => d ? new Date(d + "T12:00").toLocaleDateString(undefined,{month:"short", day:"numeric"}) : "";
 const norm = s => (s||"").toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
 const uid = () => Math.random().toString(36).slice(2,10);
@@ -326,7 +338,7 @@ async function boot(){
     S.seeded = true;
   }
   for(const it of Object.values(S.items)) autoLink(it);  // attach saved roles to live listings once the feed has them
-  if(L.listings.length){ markClosedItems(); pruneStorage(); }  // only against a feed that actually loaded
+  if(L.listings.length){ relinkMoved(); markClosedItems(); syncSnaps(); pruneStorage(); }  // only against a feed that actually loaded
   S.lastVisit = today(); save();
   renderMeta(); renderGoals(); render();
 }
@@ -342,14 +354,89 @@ function markClosedItems(){
     else if(!i.closedOn) i.closedOn = (l && l.closed_on) || today();
   }
 }
+/* Due date: the one you set wins, else the one the posting states (read nightly from its text). */
+function dueOf(i){ const l = i.lid && listingById(i.lid); return i.deadline || (l && l.deadline) || ""; }
 // Saved but never applied to, and the posting closed or the deadline passed
-const isStale = i => i.status === "Saved" && !!(i.closedOn || (i.deadline && i.deadline < today()));
-const staleWhy = i => i.closedOn ? `Posting closed ${fmt(i.closedOn)}` : `Deadline passed ${fmt(i.deadline)}`;
-/* Drop browser data for postings that are gone and not saved: hidden marks, Claude matches, pasted descriptions. */
+const isStale = i => i.status === "Saved" && !!(i.closedOn || (dueOf(i) && dueOf(i) < today()));
+const staleWhy = i => i.closedOn ? `Posting closed ${fmt(i.closedOn)}` : `Deadline passed ${fmt(dueOf(i))}`;
+/* Drop browser data for postings that are gone and not saved: hidden marks, Claude matches, pasted descriptions, snapshots. */
 function pruneStorage(){
   const keep = new Set(L.listings.map(l => l.id));
   for(const i of Object.values(S.items)){ keep.add(i.id); if(i.lid) keep.add(i.lid); }
   for(const store of [S.hidden, S.analyses, S.jds, S.jdsAt]) for(const k of Object.keys(store)) if(!keep.has(k)) delete store[k];
+  for(const k of Object.keys(S.snaps)) if(!S.items[k]) delete S.snaps[k];
+}
+/* A title or location edit gives a posting a new listing id. The nightly run records the old id in prev_ids; for
+   anything it missed, the same posting link (or job number) finds it. Either way the saved role follows the posting
+   instead of showing "Posting closed", and its snapshot shows what was renamed. */
+function relinkMoved(){
+  for(const i of Object.values(S.items)){
+    if(!i.lid) continue;
+    const l = listingById(i.lid);
+    if(l && l.status === "open") continue;
+    let n = L.listings.find(x => (x.prev_ids || []).includes(i.lid));
+    if(!n && i.url){ const u = listingForUrl(i.url, i.company); if(u && u.id !== i.lid && u.status === "open") n = u; }
+    if(n && !itemFor(n.id)) moveItem(i, n);
+  }
+}
+function moveItem(i, n){
+  for(const store of [S.analyses, S.jds, S.jdsAt, S.hidden]) if(store[i.lid] !== undefined && store[n.id] === undefined){ store[n.id] = store[i.lid]; delete store[i.lid]; }
+  Object.assign(i, {lid:n.id, title:n.title, location:n.location, url:n.url}); delete i.closedOn;
+}
+/* Closed posting, and an open one at the same company with the same title: likely reposted under a new job number.
+   Not followed automatically (it can be a different opening); the role offers to switch. */
+function repostOf(i){
+  if(!i.closedOn && !(i.lid && (listingById(i.lid) || {}).status === "closed")) return null;
+  return L.listings.find(x => x.status === "open" && !x.excluded && x.company === i.company && norm(x.title) === norm(i.title) && !itemFor(x.id)) || null;
+}
+
+/* ---------- posting changes since you saved ---------- */
+/* Each saved role keeps a snapshot of its posting from when you saved it (or last marked it reviewed), in this browser.
+   changesOf() lists what differs now: title, location, term, stated deadline, pay, eligibility, the description text. */
+function snapOf(l){
+  return {h:l.desc_hash || "", k:l.hash_kind || "", desc:l.desc || "", title:l.title, location:l.location || "", term:l.term,
+    deadline:l.deadline || "", pay:l.pay || "", flags:[...l.flags], tags:[...l.tags], excluded:l.excluded || "", at:today()};
+}
+function syncSnaps(){
+  for(const i of Object.values(S.items)){
+    const l = i.lid && listingById(i.lid); if(!l) continue;
+    const s = S.snaps[i.id];
+    if(!s){ S.snaps[i.id] = {...snapOf(l), base:true}; continue; }  // saved before tracking existed: starts now
+    // the first full read of the text, or a switch to another source of it, is a new baseline, not an edit
+    if(l.desc_hash && (!s.h || s.k !== (l.hash_kind || ""))) Object.assign(s, {h:l.desc_hash, k:l.hash_kind || "", desc:l.desc || ""});
+  }
+}
+function changesOf(i){
+  const l = i.lid && listingById(i.lid), s = S.snaps[i.id]; if(!l || !s) return [];
+  const out = [], was = (a, b) => `${a || "not listed"} → ${b || "not listed"}`;
+  if(l.title !== s.title) out.push(`Title: “${s.title}” → “${l.title}”`);
+  if((l.location || "") !== s.location) out.push(`Location: ${was(s.location, l.location)}`);
+  if(l.term !== s.term) out.push(`Term: ${was(s.term, l.term)}`);
+  if((l.deadline || "") !== s.deadline) out.push(!l.deadline ? `Deadline no longer stated (was ${fmt(s.deadline)})` : s.deadline ? `Deadline moved: ${fmt(s.deadline)} → ${fmt(l.deadline)}` : `Deadline now stated: ${fmt(l.deadline)}`);
+  if((l.pay || "") !== s.pay) out.push(`Pay: ${was(s.pay, l.pay)}`);
+  const plus = (a, b) => a.filter(x => !b.includes(x));
+  if(plus(l.flags, s.flags).length) out.push(`New eligibility flag: ${plus(l.flags, s.flags).join(", ")}`);
+  if(plus(s.flags, l.flags).length) out.push(`Flag cleared: ${plus(s.flags, l.flags).join(", ")}`);
+  if(plus(s.tags, l.tags).length) out.push(`No longer says: ${plus(s.tags, l.tags).join(", ")}`);
+  if(plus(l.tags, s.tags).length) out.push(`Now says: ${plus(l.tags, s.tags).join(", ")}`);
+  if((l.excluded || "") !== s.excluded && l.excluded) out.push(`Posting now reads: ${l.excluded}`);
+  if(l.desc_hash && s.h && l.desc_hash === s.h) return out;
+  if(l.desc_hash && s.h && s.k === (l.hash_kind || "")) out.push(`Description edited${l.desc_changed_on ? " " + fmt(l.desc_changed_on) : ""}`);
+  return out;
+}
+/* Line diff of the stored description then and now (whitespace and punctuation ignored). */
+function lineDiff(a, b){
+  const A = a.split("\n").map(x => x.trim()).filter(Boolean), B = b.split("\n").map(x => x.trim()).filter(Boolean);
+  const nA = A.map(normText), nB = B.map(normText), n = A.length, m = B.length;
+  const T = Array.from({length:n + 1}, () => new Uint16Array(m + 1));
+  for(let x = n - 1; x >= 0; x--) for(let y = m - 1; y >= 0; y--) T[x][y] = nA[x] === nB[y] ? T[x+1][y+1] + 1 : Math.max(T[x+1][y], T[x][y+1]);
+  const out = []; let x = 0, y = 0;
+  while(x < n || y < m){
+    if(x < n && y < m && nA[x] === nB[y]){ x++; y++; }
+    else if(y < m && (x >= n || T[x][y+1] >= T[x+1][y])) out.push({t:"add", s:B[y++]});
+    else out.push({t:"del", s:A[x++]});
+  }
+  return out;
 }
 function openCleanup(){
   const stale = Object.values(S.items).filter(isStale);
@@ -378,16 +465,17 @@ let urlIndex = null;
 function listingForUrl(u, company){
   if(!urlIndex){
     urlIndex = {byKey:new Map(), byId:new Map()};
-    for(const l of L.listings){
-      const k = urlKey(l.url), id = urlJobId(l.url);
-      if(k && !urlIndex.byKey.has(k)) urlIndex.byKey.set(k, l);
+    for(const l of L.listings){  // an open listing wins over a closed one with the same link (renamed postings)
+      const k = urlKey(l.url), id = urlJobId(l.url), have = urlIndex.byKey.get(k);
+      if(k && (!have || (have.status !== "open" && l.status === "open"))) urlIndex.byKey.set(k, l);
       if(id) (urlIndex.byId.get(id) || urlIndex.byId.set(id, []).get(id)).push(l);
     }
   }
   const exact = urlIndex.byKey.get(urlKey(u));
   if(exact) return exact;
   const id = urlJobId(u);  // same job ID on another URL form: only trust it within the same company
-  return (id && (urlIndex.byId.get(id) || []).find(l => norm(l.company) === norm(company))) || null;
+  const same = id ? (urlIndex.byId.get(id) || []).filter(l => norm(l.company) === norm(company)) : [];
+  return same.find(l => l.status === "open") || same[0] || null;
 }
 function autoLink(it){
   if(it.lid) return false;
@@ -397,21 +485,25 @@ function autoLink(it){
   if(!l || itemFor(l.id)) return false;  // never link two saved roles to one listing
   for(const store of [S.analyses, S.jds]) if(store[it.id] && !store[l.id]){ store[l.id] = store[it.id]; delete store[it.id]; }  // keep match / pasted JD
   it.lid = l.id; it.url = it.url || l.url; it.title = l.title; it.location = l.location;
+  S.snaps[it.id] = snapOf(l);
   return true;
 }
 
+/* The nightly run can fail or be paused (GitHub turns off scheduled runs after 60 days without a commit). Old data
+   would still look current, so past 36 hours a banner says so. */
 function renderMeta(){
-  if(!L.generated_at) return;
+  if(!L.generated_at){ $("#banner").textContent = "Listings didn't load, so posting status, deadlines and descriptions below can't be checked. Reload, or open the page from GitHub Pages."; return; }
   const bad = SRC.sources.filter(s => !s.ok);
   const hrs = Math.round((Date.now() - new Date(L.generated_at)) / 36e5);
+  $("#banner").textContent = hrs > 36 ? `Listings were last updated ${Math.round(hrs / 24)} days ago (${new Date(L.generated_at).toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})}). The nightly run hasn't finished since, so closed postings, deadlines and description changes may be missing. Check the repo's Actions tab.` : "";
   $("#meta").innerHTML = `Updated ${hrs < 1 ? "under an hour" : hrs + "h"} ago, ${esc(L.count)} open roles. ` +
-    (bad.length ? `<button id="srcBtn">${bad.length} feed${bad.length>1?"s":""} failing</button>` : `All ${SRC.sources.length} feeds working.`);
+    `<button id="srcBtn">${bad.length ? `${bad.length} feed${bad.length>1?"s":""} failing` : `All ${SRC.sources.length} feeds working`}</button>`;
   const b = $("#srcBtn"); if(b) b.onclick = openSources;
 }
 
 /* ---------- goals ---------- */
 function applied(){ return Object.values(S.items).filter(i => i.status !== "Saved"); }
-function dueSoon(){ return Object.values(S.items).filter(i => i.deadline && i.status === "Saved" && days(today(), i.deadline) <= 7 && days(today(), i.deadline) >= 0); }
+function dueSoon(){ return Object.values(S.items).filter(i => { const d = dueOf(i); return d && i.status === "Saved" && days(today(), d) <= 7 && days(today(), d) >= 0; }); }
 function followUps(){
   const n = S.settings.followDays;
   const its = Object.values(S.items).filter(i => ACTIVE.includes(i.status) && days(i.lastActivity) >= n);
@@ -446,7 +538,7 @@ $("#tabs").onclick = e => { const t = e.target.dataset.tab; if(t){ ui.tab = t; u
 
 /* ---------- board ---------- */
 function urgency(i){
-  if(i.status === "Saved") return i.deadline ? days(today(), i.deadline) : 400;
+  if(i.status === "Saved") return dueOf(i) ? days(today(), dueOf(i)) : 400;
   if(ACTIVE.includes(i.status)) return 500 - days(i.lastActivity);
   return 900;
 }
@@ -478,17 +570,43 @@ function itemRow(i){
   const a = analysisFor(i), l = i.lid ? listingById(i.lid) : null;
   const quiet = ACTIVE.includes(i.status) ? days(i.lastActivity) : null;
   const flags = (l ? l.flags : []).map(f => `<span class="chip flag">${esc(f)}</span>`).join("");
-  const closed = (l && l.status === "closed") || i.closedOn ? `<span class="chip flag">Posting closed</span>` : "";
-  let due = "";
-  if(i.deadline){ const d = days(today(), i.deadline); due = `<span class="chip ${d<=7 && d>=0 ? "due":""}">${fmt(i.deadline)}${d<0?" (passed)":""}</span>`; }
-  const co = i.status === "Saved" && coByName(i.company), cd = co && companyDeadline(co);  // the company's stated or last-year date, as a hint
-  if(cd && cd.main !== "Rolling") due += `<div class="sub" title="From the Companies tab">${!i.deadline && cd.soon ? `<span class="chip due">${esc(cd.main)}</span>` : esc(cd.main)} ${esc(cd.sub.toLowerCase())}</div>`;
-  if(quiet !== null && quiet >= S.settings.followDays) due += `<span class="chip due">Quiet ${quiet}d</span>`;
+  const closed = (l && l.status === "closed") || i.closedOn ? `<span class="chip flag">Posting closed</span>${repostOf(i) ? `<span class="chip due" title="An open posting at ${esc(i.company)} has the same title. Open the role to switch to it.">Reposted?</span>` : ""}` : "";
+  const ch = changesOf(i);
+  const status = (ch.length ? `<span class="chip due" title="${esc(ch.join("\n"))}">Changed since saved (${ch.length})</span>` : "")
+    + (l && l.page_gone && l.status === "open" ? `<span class="chip flag" title="Its page said 'not found' on ${esc(fmt(l.page_gone))}, but the site's search still lists it. Checked again nightly.">Page gone, may be closed</span>` : "")
+    + (l && l.excluded ? `<span class="chip flag">Now: ${esc(l.excluded)}</span>` : "") + trackLine(i, l);
+  const due = dueCell(i, l);
   return `<tr class="row" data-id="${esc(i.id)}"><td><span class="lane ${esc(i.lane)}"></span><span class="co">${esc(i.company)}</span><span class="tier">${esc(tierOf(i.company))}</span>
-     <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
+     <div class="sub">${esc(i.title)}</div>${flags}${closed}${status}</td>
     <td><select class="status-select" data-status="${esc(i.id)}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
-    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong>${matchMarkers(a)}<div class="sub">${freshMatch(a) ? esc(a.projected) + "% projected" : "Old scoring: match again"}</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
+    <td>${due}${quiet !== null && quiet >= S.settings.followDays ? `<span class="chip due">Quiet ${quiet}d</span>` : ""}</td>
+    <td>${a ? `<strong>${esc(a.current)}%</strong>${matchMarkers(a)}<div class="sub">${!freshMatch(a) ? "Old scoring: match again" : staleMatch(a, l) ? "Posting changed: match again" : esc(a.projected) + "% projected"}</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
+}
+/* Every date says where it came from: you, the posting's own text, or the company's history (Companies tab). */
+function dueCell(i, l){
+  const chip = (d, cls = "") => { const n = days(today(), d); return `<span class="chip ${n <= 7 && n >= 0 ? "due" : cls}">${fmt(d)}${n < 0 ? " (passed)" : ""}</span>`; };
+  const pd = l && l.deadline;
+  let out = "";
+  if(i.deadline){
+    out = `${chip(i.deadline)}<div class="sub">You set it</div>`;
+    if(pd && pd !== i.deadline) out += `<span class="chip flag" title="${esc(l.deadline_quote || "")}">Posting says ${esc(fmt(pd))}</span>`;
+  }else if(pd) out = `${chip(pd)}<div class="sub" title="${esc(l.deadline_quote || "")}">Stated in posting</div>`;
+  const co = i.status === "Saved" && coByName(i.company), cd = co && companyDeadline(co);  // the company's stated or last-year date, as a hint
+  if(cd && cd.main !== "Rolling") out += `<div class="sub" title="From the Companies tab">${!out && cd.soon ? `<span class="chip due">${esc(cd.main)}</span>` : esc(cd.main)} ${esc(cd.sub.toLowerCase())}</div>`;
+  return out;
+}
+/* How current the nightly run's view of this posting is. Quiet when it was read in the last 3 days. */
+function trackLine(i, l){
+  if(!i.lid) return `<div class="sub">Not tracked: check the posting yourself${i.verifiedOn ? ` (you did ${esc(fmt(i.verifiedOn))})` : ""}</div>`;
+  if(!l || l.status !== "open") return "";
+  if(!l.checked_on) return `<div class="sub">Text not read by the nightly run yet</div>`;
+  return days(l.checked_on) > 3 ? `<div class="sub">Text last read ${esc(fmt(l.checked_on))}</div>` : "";
+}
+/* The match was made on an older version of the description. */
+function staleMatch(a, l){
+  if(!a || !l || !l.desc_hash) return false;
+  return a.h ? a.h !== l.desc_hash : !!(l.desc_changed_on && a.at && a.at < l.desc_changed_on);
 }
 /* Board dropdown: save, read back, then a small ✓ (or ✗ with the reason on hover) next to the select. */
 function setStatus(id, s){
@@ -509,7 +627,7 @@ function setStatus(id, s){
 /* ---------- feed ---------- */
 function feedList(){
   const f = ui.feed, q = norm(f.q), saved = new Set(Object.values(S.items).map(i => i.lid));  // saved roles live in Apply later
-  return L.listings.filter(l => l.status === "open" && !S.hidden[l.id] && !saved.has(l.id) && f.lanes.has(l.lane)
+  return L.listings.filter(l => l.status === "open" && !l.excluded && !S.hidden[l.id] && !saved.has(l.id) && f.lanes.has(l.lane)
     && (!f.bay || l.bay) && (!f.tier || l.tier === "P1" || l.tier === "P2") && (!f.clean || !l.flags.length)
     && (!f.fresh || (prevVisit ? l.first_seen > prevVisit : l.first_seen === today()))
     && (f.coop === "all" || (f.coop === "summer" ? l.term === "Summer 2027" : (l.coop || /Spring|Fall|Winter/.test(l.term))))
@@ -558,6 +676,7 @@ function addListingItem(lid){
   const id = uid();
   S.items[id] = {id, lid, company:l.company, title:l.title, location:l.location, lane:l.lane, url:l.url, status:"Saved",
     added:today(), lastActivity:today(), savedAt:nowIso(), history:[{s:"Saved", d:today()}]};
+  S.snaps[id] = snapOf(l);
   return id;
 }
 function saveListing(lid){ if(itemFor(lid)) return; addListingItem(lid); save(); renderGoals(); renderKeepScroll(); }
@@ -694,13 +813,14 @@ async function claudeMatch(key, company, title, location){
   let a;
   try{ a = await matchRequest(st, prompt, false); }
   catch(e){ if(!(e instanceof RetryableReply)) throw e; a = await matchRequest(st, prompt, true); }
-  a.at = today(); a.model = st.model;
+  a.at = today(); a.model = st.model; a.h = (listingById(key) || {}).desc_hash || "";  // which version of the text was matched
   scoreMatch(a, st);
   for(const k of ["strengths","gaps","keywords"]) if(!Array.isArray(a[k])) a[k] = [];
   S.analyses[key] = a; save(); return a;
 }
 async function matchAll(){
-  const todo = Object.values(S.items).filter(i => !freshMatch(analysisFor(i)) && !["Rejected","Withdrawn","Offer"].includes(i.status));
+  const todo = Object.values(S.items).filter(i => (!freshMatch(analysisFor(i)) || staleMatch(analysisFor(i), i.lid && listingById(i.lid)))
+    && !["Rejected","Withdrawn","Offer"].includes(i.status));
   if(!todo.length){ feedback($("#matchAllMsg"), "ok", "All matched"); return; }
   await runAction($("#matchAll"), async busy => {
     let done = 0, noJd = 0, failed = 0, stop = null;
@@ -724,7 +844,7 @@ function matchBlock(key, company, title, location){
   const a = S.analyses[key], q = quickFit(jdFor(key));
   return `<h3>Fit</h3>
    ${q ? `<p class="note">Keyword fit: ${q.hit} of ${q.of} posting terms appear in your resume or plan.${q.missing.length ? " Missing: " + esc(q.missing.slice(0,8).join(", ")) + "." : ""}</p>` : ""}
-   ${a ? `<div class="match">${freshMatch(a) ? "" : `<p class="flagline err">Old scoring: match again.</p>`}
+   ${a ? `<div class="match">${freshMatch(a) ? "" : `<p class="flagline err">Old scoring: match again.</p>`}${staleMatch(a, listingById(key)) ? `<p class="flagline err">The posting's description changed after this match: match again.</p>` : ""}
      <div class="pct"><div>${esc(a.current)}%<span>Now</span></div><div>${esc(a.projected)}%<span>After planned work</span></div><div style="font-size:18px;align-self:center"${a.gateFails && a.gateFails.length || a.eligible === "no" ? ` class="err"` : ""}>${esc(a.eligible)}<span>Eligible</span></div></div>
      ${a.gateFails && a.gateFails.length ? `<p class="flagline err">Eligibility not shown: ${esc(a.gateFails.join("; "))}. Not counted in the %.</p>` : ""}
      ${a.lowConfidence ? `<p class="flagline" style="color:var(--amber)">Low confidence: fewer than 4 scored requirements.</p>` : ""}
@@ -799,8 +919,20 @@ document.addEventListener("keydown", e => { if(e.key === "Escape") closeDrawer()
 function listingHeader(l){
   const c = coByName(l.company);
   return `<h2>${esc(l.title)}</h2><p class="sub">${esc(l.company)}${c ? `, ${esc(c.tier)}, ${esc(c.segment)}` : ", not on your company list"}</p>
-   <p>${esc(l.location || "Location not listed")}<br><span class="sub">${l.term === "Unspecified" ? "Term not stated" : esc(l.term)}${l.coop ? ", co-op" : ""}. Lane: ${esc(LANES[l.lane])}. First seen ${fmt(l.first_seen)}. Source: ${esc(l.sources.join(", "))}.</span></p>
-   ${l.flags.map(x => `<span class="chip flag">${esc(x)}</span>`).join("")}${l.tags.map(x => `<span class="chip good">${esc(x)}</span>`).join("")}`;
+   <p>${esc(l.location || "Location not listed")}<br><span class="sub">${l.term === "Unspecified" ? "Term not stated" : esc(l.term)}${l.coop ? ", co-op" : ""}. Lane: ${esc(LANES[l.lane])}. Source: ${esc(l.sources.join(", "))}.</span></p>
+   ${l.flags.map(x => `<span class="chip flag">${esc(x)}</span>`).join("")}${l.tags.map(x => `<span class="chip good">${esc(x)}</span>`).join("")}
+   <p class="sub">${postingDates(l)}</p>
+   ${l.deadline ? `<p class="note"><strong>Deadline ${esc(fmt(l.deadline))}</strong> (${esc(dueIn(l.deadline))}), stated in the posting: “${esc(l.deadline_quote || "")}”</p>` : ""}
+   ${l.pay ? `<p class="note">Pay in the posting: ${esc(l.pay)}</p>` : ""}
+   ${l.was ? `<p class="note">Renamed ${esc(fmt(l.was.on))}: was “${esc(l.was.title)}”${l.was.location !== l.location ? `, ${esc(l.was.location || "no location")}` : ""}.</p>` : ""}
+   ${l.page_gone && l.status === "open" ? `<p class="err">The posting's page said "not found" on ${esc(fmt(l.page_gone))}, but the site's search still lists it. It may be closing; check before you spend time on it.</p>` : ""}
+   ${l.excluded ? `<p class="err">The posting now reads: ${esc(l.excluded)}. It's hidden from Openings.</p>` : ""}`;
+}
+/* Each date with what it means: when the role appeared, when the site's search last listed it, when its text was last read. */
+function postingDates(l){
+  const read = l.checked_on ? `Text read ${fmt(l.checked_on)}${l.desc_changed_on ? `, last edited ${fmt(l.desc_changed_on)}` : ", no edits seen"}` : "Text not read by the nightly run yet (blocked site or not reached)";
+  const seen = l.status === "open" ? `Listed in the site's search ${l.last_seen >= (L.generated_at || "").slice(0,10) ? "on the last run" : "until " + fmt(l.last_seen)}` : `Closed ${fmt(l.closed_on)}`;
+  return `First seen ${fmt(l.first_seen)}. ${seen}. ${read}.`;
 }
 function openListing(lid){
   const l = listingById(lid); if(!l) return;
@@ -831,7 +963,10 @@ function openItem(id, company){
   const key = i.lid || i.id, l = i.lid ? listingById(i.lid) : null;
   const companies = CO.map(c => `<option value="${esc(c.name)}">`).join("");
   openDrawer(`${l ? listingHeader(l) : `<h2>${isNew ? "Add a role" : esc(i.title || "Role")}</h2><p class="sub">${esc(i.company)}</p>`}
-   <div class="actions">${safeUrl(i.url) ? `<a class="btn" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">Open posting</a>` : ""}</div>
+   <div class="actions">${safeUrl(i.url) ? `<a class="btn" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">Open posting</a>` : ""}
+    ${!isNew && !i.lid ? `<button class="btn" id="verI">I checked the posting today</button><span class="save-status" id="verMsg" role="status" aria-live="polite"></span>` : ""}</div>
+   ${!isNew && !i.lid ? `<p class="note">Not tracked: this role isn't linked to a listing the nightly run reads, so closings, deadline changes and edits won't show up here. ${i.verifiedOn ? `You last checked it ${esc(fmt(i.verifiedOn))}.` : ""}</p>` : ""}
+   ${isNew ? "" : changesBlock(i)}
    ${isNew ? `<label for="fPaste" class="note">Paste the posting (the whole page, or just the link). The fields below fill in; fix anything it gets wrong.</label>
     <textarea class="field" id="fPaste" rows="5" placeholder="Paste the job posting here"></textarea><p class="sub" id="fPasteMsg"></p>` : ""}
    <div class="kv">
@@ -882,7 +1017,46 @@ function openItem(id, company){
     if(!ok){ S.items[i.id] = i; return; }
     renderGoals(); render(); await sleep(700); forceCloseDrawer();
   };
-  if(!isNew){ wireMatch(key, i.company, i.title, i.location, () => openItem(i.id)); wireJd(key); }
+  if(!isNew){ wireMatch(key, i.company, i.title, i.location, () => openItem(i.id)); wireJd(key); wireChanges(i); }
+  if($("#verI")) $("#verI").onclick = async () => {
+    const prev = i.verifiedOn;
+    const ok = await runAction($("#verI"), () => { i.verifiedOn = today(); persist(); },
+      {verify: () => storedMatches(s => (s.items[i.id] || {}).verifiedOn), ok:"Marked", out:"#verMsg"});
+    if(ok){ render(); reopenWith("#verMsg", "Marked", () => openItem(i.id)); } else i.verifiedOn = prev;
+  };
+}
+function changesBlock(i){
+  const l = i.lid && listingById(i.lid), s = S.snaps[i.id], ch = changesOf(i), rp = repostOf(i);
+  let h = "";
+  if(rp) h += `<div class="changes"><h3>Reposted?</h3>
+    <p class="note">This posting closed, and ${esc(i.company)} has an open one with the same title (first seen ${esc(fmt(rp.first_seen))}, ${esc(rp.location || "location not listed")}). It may be the same role under a new job number, or a different opening.</p>
+    <div class="actions"><button class="btn" id="openRp">Look at it</button><button class="btn primary" id="switchRp">Switch this role to it</button><span class="save-status" id="rpMsg" role="status" aria-live="polite"></span></div></div>`;
+  if(ch.length){
+    const diff = l && s.desc !== (l.desc || "") ? lineDiff(s.desc, l.desc || "") : [];
+    h += `<div class="changes"><h3>Changed since you ${s.base ? "started tracking it" : "saved it"} (${esc(fmt(s.at))})</h3>
+     <ul>${ch.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+     ${diff.length ? `<div class="diff">${diff.slice(0, 60).map(d => `<p class="${d.t}">${esc(d.s)}</p>`).join("")}${diff.length > 60 ? `<p class="sub">${diff.length - 60} more changed lines</p>` : ""}</div>`
+       : ch.some(c => c.startsWith("Description")) ? `<p class="note">The edit is past the part of the description stored here. Open the posting to read it.</p>` : ""}
+     <div class="actions"><button class="btn" id="reviewed">Mark reviewed</button><span class="save-status" id="rvMsg" role="status" aria-live="polite"></span></div>
+     <p class="sub">After you mark it reviewed, only later changes show here.</p></div>`;
+  }
+  return h;
+}
+function wireChanges(i){
+  if($("#reviewed")) $("#reviewed").onclick = async () => {
+    const prev = S.snaps[i.id];
+    const ok = await runAction($("#reviewed"), () => { S.snaps[i.id] = snapOf(listingById(i.lid)); persist(); },
+      {verify: () => storedMatches(s => (s.snaps || {})[i.id]), ok:"Reviewed", out:"#rvMsg"});
+    if(ok){ render(); reopenWith("#iMsg", "Marked reviewed", () => openItem(i.id)); } else S.snaps[i.id] = prev;
+  };
+  const rp = repostOf(i);
+  if($("#openRp")) $("#openRp").onclick = () => openListing(rp.id);
+  if($("#switchRp")) $("#switchRp").onclick = async () => {
+    const before = JSON.stringify(S);
+    const ok = await runAction($("#switchRp"), () => { moveItem(i, rp); persist(); },
+      {verify: () => storedMatches(s => s.items[i.id]), ok:"Switched", out:"#rpMsg"});
+    if(ok){ urlIndex = null; render(); reopenWith("#iMsg", "Switched to the new posting", () => openItem(i.id)); } else S = normalize(JSON.parse(before));
+  };
 }
 
 /* Paste helper for "Add a role": pulls link, role, location, company and lane out of a pasted posting.
@@ -949,7 +1123,7 @@ function timingOf(c){
 }
 /* Deadline: your saved role's deadline, else one the company stated, else when last year's postings closed. */
 function deadlineOf(c){
-  const mine = Object.values(S.items).filter(i => i.company === c.name && i.status === "Saved" && i.deadline && i.deadline >= today()).map(i => i.deadline).sort()[0];
+  const mine = Object.values(S.items).filter(i => i.company === c.name && i.status === "Saved" && dueOf(i) && dueOf(i) >= today()).map(dueOf).sort()[0];
   if(mine) return {main: fmt(mine), sub: `Your saved role, ${dueIn(mine)}`, soon: days(today(), mine) <= 7};
   return companyDeadline(c);
 }
@@ -965,7 +1139,7 @@ function companyDeadline(c){
 function renderCompanies(){
   const f = ui.co, q = norm(f.q);
   const openBy = {}, salesBy = {};
-  L.listings.forEach(l => { if(l.status === "open"){ openBy[l.company] = (openBy[l.company]||0) + 1; if(l.lane === "sales") salesBy[l.company] = (salesBy[l.company]||0) + 1; } });
+  L.listings.forEach(l => { if(l.status === "open" && !l.excluded){ openBy[l.company] = (openBy[l.company]||0) + 1; if(l.lane === "sales") salesBy[l.company] = (salesBy[l.company]||0) + 1; } });
   const rows = CO.filter(c => (!q || norm(c.name + " " + c.segment).includes(q)) && (!f.open || openBy[c.name]) && (!f.manual || needsManual(c.name)))
     .sort((a,b) => a.tier.localeCompare(b.tier) || (openBy[b.name]||0) - (openBy[a.name]||0) || a.name.localeCompare(b.name));
   $("#main").innerHTML = `<section class="panel"><header><h2>Companies</h2><span class="count">${rows.length} shown. Defense and national labs are excluded.</span></header>
@@ -990,7 +1164,7 @@ function renderCompanies(){
 }
 function openCompany(name){
   const c = coByName(name); if(!c) return;
-  const roles = L.listings.filter(l => l.company === name && l.status === "open");
+  const roles = L.listings.filter(l => l.company === name && l.status === "open" && !l.excluded);
   const contacts = S.contacts.filter(x => x.company === name);
   const ss = SRC.sources.filter(s => s.company === name);
   openDrawer(`<h2>${esc(c.name)}</h2><p class="sub">${esc(c.tier)}, ${esc(c.segment)}${c.fit ? ", " + esc(c.fit) + " fit" : ""}</p>
@@ -1093,7 +1267,17 @@ function openSources(){
   openDrawer(`<h2>Feed health</h2><p class="sub">Last run ${new Date(SRC.generated_at).toLocaleString()}. A failing feed doesn't close its roles; they stay until it works again.</p>
    <h3>Failing (${bad.length})</h3>${bad.map(s => `<p class="src-bad">${esc(s.name)}<br><span class="sub">${esc(s.error)}</span></p>`).join("") || `<p class="note">None.</p>`}
    <p class="note">To fix one, ask Claude Code: "the ${esc((bad[0]||{}).name || "X")} feed is failing, fix the adapter."</p>
+   ${pagesHealth()}
    <h3>Working (${good.length})</h3>${good.map(s => `<p class="sub">${esc(s.name)}: ${esc(s.rows)} rows</p>`).join("")}`);
+}
+/* The nightly re-read of job pages (descriptions, deadlines, closings), and the sites where it's falling behind. */
+function pagesHealth(){
+  const p = SRC.pages; if(!p) return "";
+  const list = o => Object.entries(o || {}).map(([h, v]) => `<p class="sub">${esc(h)}: ${esc(typeof v === "object" ? Object.entries(v).map(([k, n]) => `${n} ${k}`).join(", ") : v)}</p>`).join("");
+  return `<h3>Job pages</h3><p class="note">Last run read ${esc(p.read)} postings in full, found ${esc(p.changed)} edited and ${esc(p.gone)} gone; ${esc(p.failed)} failed, ${esc(p.blocked)} skipped after a site blocked us, ${esc(p.skipped)} left for the next run.
+    ${esc(p.unread_3d)} open postings weren't read in the last 3 days (blocked sites, or not reached yet).</p>
+   ${Object.keys(p.problems || {}).length ? `<p class="sub"><strong>Sites with errors</strong></p>${list(p.problems)}` : ""}
+   ${Object.keys(p.unread_3d_by_site || {}).length ? `<p class="sub"><strong>Not read in the last 3 days, by site</strong></p>${list(p.unread_3d_by_site)}` : ""}`;
 }
 
 /* ---------- settings, backup, calendar ---------- */
@@ -1163,7 +1347,7 @@ function openSettings(){
 function download(name, text, type){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
 function exportBackup(){ const copy = JSON.parse(JSON.stringify(S)); copy.settings.apiKey = ""; download(`internship-backup-${today()}.json`, JSON.stringify(copy, null, 1), "application/json"); }
 function exportIcs(){
-  const ev = Object.values(S.items).filter(i => /^\d{4}-\d{2}-\d{2}$/.test(i.deadline || "") && i.status === "Saved");
+  const ev = Object.values(S.items).filter(i => /^\d{4}-\d{2}-\d{2}$/.test(dueOf(i)) && i.status === "Saved").map(i => ({...i, deadline:dueOf(i)}));
   const text = s => String(s ?? "").replace(/[\\;,]/g, m => "\\" + m).replace(/\r\n|\r|\n/g, "\\n");  // RFC 5545 TEXT
   const line = s => String(s ?? "").replace(/[\r\n]+/g, "");
   if(!ev.length) throw new UserError("No saved roles have deadlines yet.");
