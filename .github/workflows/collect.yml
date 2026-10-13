@@ -5,10 +5,13 @@ on:
   workflow_dispatch: {}    # "Run workflow" button for a manual refresh
 permissions:
   contents: write
+concurrency:               # a manual run during the nightly one waits instead of racing it
+  group: collect
+  cancel-in-progress: false
 jobs:
   collect:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -21,5 +24,11 @@ jobs:
           git config user.name "collector-bot"
           git config user.email "collector-bot@users.noreply.github.com"
           git add data/
-          git diff --cached --quiet || git commit -m "Listings $(date -u +%F)"
-          git push
+          git diff --cached --quiet && exit 0
+          git commit -m "Listings $(date -u +%F)"
+          # commits pushed while this ran would reject a plain push and lose tonight's data: rebase onto them first
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 10
+          done
+          exit 1
