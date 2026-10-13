@@ -486,7 +486,7 @@ function itemRow(i){
      <div class="sub">${esc(i.title)}</div>${flags}${closed}</td>
     <td><select class="status-select" data-status="${esc(i.id)}" aria-label="Status">${STATUSES.map(s => `<option${s===i.status?" selected":""}>${s}</option>`).join("")}</select>
      ${quiet !== null ? `<div class="sub">${quiet}d since update</div>` : ""}</td>
-    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong>${matchMarkers(a)}<div class="sub">${a.requirements ? esc(a.projected) + "% projected" : "Old scoring: match again"}</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
+    <td>${due}</td><td>${a ? `<strong>${esc(a.current)}%</strong>${matchMarkers(a)}<div class="sub">${freshMatch(a) ? esc(a.projected) + "% projected" : "Old scoring: match again"}</div>` : `<span class="sub">Not matched</span>`}</td></tr>`;
 }
 /* Board dropdown: save, read back, then a small ✓ (or ✗ with the reason on hover) next to the select. */
 function setStatus(id, s){
@@ -580,14 +580,24 @@ const SYS = `You assess how well one specific student fits one internship postin
 Requirements: 4-15 items, deduplicated, only things the posting actually asks for. Boilerplate it lists (e.g. "team player") is fine; never invent items. One item per distinct ask.
 - kind: "preferred" if the posting calls it preferred, nice to have, a plus, ideally, bonus, or desired; every other listed qualification is "required".
 - gate: true only for eligibility rules (degree level or field, graduation year, citizenship, class standing, GPA floor, work authorization, enrollment). Skills and experience are never gates.
-- now: status using only STUDENT and RESUME (finished work). met = clearly shown; partial = related but weaker (coursework instead of experience, adjacent tool, less than asked); missing = not shown.
+- now: status using only STUDENT and RESUME (finished work). Judge depth and scope, not keywords. met = the resume shows the student doing this specific thing at roughly the level asked; partial = related but weaker (coursework, an adjacent tool or domain, smaller scope, or the skill is only named); missing = not shown. When torn between two statuses, choose the lower. Asks for experience or proficiency ("experience with", "proficient in", "N years") are met only when the resume shows the skill used in real work or a substantial project, never by a skills list alone. Soft skills (communication, teamwork) need a concrete example, not a self-description.
+- now_source: where now_evidence comes from: "work" (a job, internship, or research position), "project" (personal, team, club, or class project), "coursework", "skills" (only named in a skills list, summary, or the STUDENT profile), or "" when missing.
 - now_evidence: an exact verbatim quote (5-25 words, copied character for character) from STUDENT or RESUME that supports the status, or "" when missing. Code checks every quote; a paraphrase counts as missing.
-- planned: status if the PLANNED WORK is finished. Never lower than now.
+- planned: status if the PLANNED WORK is finished, judged just as strictly. Never lower than now.
+- planned_source: same values as now_source, or "planned" when the evidence is in PLANNED WORK.
 - planned_evidence: exact verbatim quote from STUDENT, RESUME, or PLANNED WORK, or "" when missing.
+Code then lowers every status not backed by "work" one step (met -> partial -> missing), because a student's grasp of project, class, and listed skills is usually shallower than the resume reads. Assess honestly anyway; don't pre-lower.
 eligible: "no" if a gate is clearly failed, "unclear" if a gate can't be confirmed, otherwise "yes" or "likely".
+verdict: intern postings ask for more than they require, so base it on gates and required items, not on how many items are met.
 Reply with ONLY a JSON object, no prose, no code fences:
-{"requirements":[{"text":"short restatement of the ask","kind":"required|preferred","gate":false,"now":"met|partial|missing","now_evidence":"","planned":"met|partial|missing","planned_evidence":""}],"eligible":"yes|likely|unclear|no","eligibility_note":"one sentence","verdict":"one sentence: apply now, apply after X, or skip, and why","strengths":["max 3, short"],"gaps":[{"gap":"short","fix":"one concrete action, preferably a specific item from the planned work, with what to show on the resume"}],"keywords":["max 8 posting terms the student can truthfully mirror"]}`;
+{"requirements":[{"text":"short restatement of the ask","kind":"required|preferred","gate":false,"now":"met|partial|missing","now_source":"work|project|coursework|skills|","now_evidence":"","planned":"met|partial|missing","planned_source":"work|project|coursework|skills|planned|","planned_evidence":""}],"eligible":"yes|likely|unclear|no","eligibility_note":"one sentence","verdict":"one sentence: apply now, apply after X, or skip, and why","strengths":["max 3, short"],"gaps":[{"gap":"short","fix":"one concrete action, preferably a specific item from the planned work, with what to show on the resume"}],"keywords":["max 8 posting terms the student can truthfully mirror"]}`;
 const STATUS_VAL = {met:1, partial:0.5, missing:0};
+const SCORING = 2;  // bump when scoring changes; older matches show "Old scoring: match again"
+const freshMatch = a => !!(a && a.requirements && a.v === SCORING);
+/* Conservative by design: only paid work / research counts at face value. Projects, coursework, listed skills,
+   and anything only in the planned work drop one step (met -> partial -> missing). Gates are never lowered. */
+const LOWER = {met:"partial", partial:"missing", missing:"missing"};
+const SOURCES = ["work", "project", "coursework", "skills", "planned"];
 const normText = s => String(s || "").toLowerCase().replace(/[^a-z0-9+#]+/g, " ").trim();
 /* Quote check: normalized evidence must appear in the normalized source, on word boundaries. */
 const quoted = (ev, src) => { const q = normText(ev); return q.length > 0 && src.includes(" " + q + " "); };
@@ -604,6 +614,8 @@ function scoreMatch(a, st){
       q[f] = STATUS_VAL[r[f]] !== undefined ? r[f] : "missing";
       q[f + "_evidence"] = typeof r[f + "_evidence"] === "string" ? r[f + "_evidence"].trim().slice(0, 400) : "";
       if(q[f] !== "missing" && !quoted(q[f + "_evidence"], src)){ q[f] = "missing"; q[f + "_unverified"] = true; }
+      q[f + "_source"] = SOURCES.includes(r[f + "_source"]) ? r[f + "_source"] : (q[f] === "missing" ? "" : "skills");  // unlabeled = weakest
+      if(!q.gate && q[f] !== "missing" && q[f + "_source"] !== "work"){ q[f + "_claude"] = q[f]; q[f] = LOWER[q[f]]; }
     }
     if(STATUS_VAL[q.planned] < STATUS_VAL[q.now]){ q.planned = q.now; q.planned_evidence = q.now_evidence; delete q.planned_unverified; }
     reqs.push(q);
@@ -613,7 +625,7 @@ function scoreMatch(a, st){
   const pct = f => { let got = 0, of = 0;
     for(const r of scored){ const w = r.kind === "required" ? 2 : 1; of += w; got += w * STATUS_VAL[r[f]]; }
     return of ? Math.round(100 * got / of) : 0; };
-  a.current = pct("now"); a.projected = Math.max(a.current, pct("planned"));
+  a.current = pct("now"); a.projected = Math.max(a.current, pct("planned")); a.v = SCORING;
   a.lowConfidence = scored.length < 4;
   a.gateFails = a.requirements.filter(r => r.gate && r.now === "missing").map(r => r.text);
   if(!["yes","likely","unclear","no"].includes(a.eligible)) a.eligible = "unclear";
@@ -626,7 +638,7 @@ function reqTally(a, f){
   return `Required ${c("required")} met, preferred ${c("preferred")}`;
 }
 function matchMarkers(a){
-  if(!a.requirements) return "";
+  if(!freshMatch(a)) return "";
   return (a.gateFails && a.gateFails.length || a.eligible === "no" ? `<span class="mk bad" title="Eligibility: ${esc(a.eligible)}">gate</span>` : "")
     + (a.lowConfidence ? `<span class="mk" title="Fewer than 4 scored requirements">low conf.</span>` : "");
 }
@@ -686,7 +698,7 @@ async function claudeMatch(key, company, title, location){
   S.analyses[key] = a; save(); return a;
 }
 async function matchAll(){
-  const todo = Object.values(S.items).filter(i => !analysisFor(i) && !["Rejected","Withdrawn","Offer"].includes(i.status));
+  const todo = Object.values(S.items).filter(i => !freshMatch(analysisFor(i)) && !["Rejected","Withdrawn","Offer"].includes(i.status));
   if(!todo.length){ feedback($("#matchAllMsg"), "ok", "All matched"); return; }
   await runAction($("#matchAll"), async busy => {
     let done = 0, noJd = 0, failed = 0, stop = null;
@@ -710,11 +722,11 @@ function matchBlock(key, company, title, location){
   const a = S.analyses[key], q = quickFit(jdFor(key));
   return `<h3>Fit</h3>
    ${q ? `<p class="note">Keyword fit: ${q.hit} of ${q.of} posting terms appear in your resume or plan.${q.missing.length ? " Missing: " + esc(q.missing.slice(0,8).join(", ")) + "." : ""}</p>` : ""}
-   ${a ? `<div class="match">${a.requirements ? "" : `<p class="flagline err">Old scoring: match again.</p>`}
+   ${a ? `<div class="match">${freshMatch(a) ? "" : `<p class="flagline err">Old scoring: match again.</p>`}
      <div class="pct"><div>${esc(a.current)}%<span>Now</span></div><div>${esc(a.projected)}%<span>After planned work</span></div><div style="font-size:18px;align-self:center"${a.gateFails && a.gateFails.length || a.eligible === "no" ? ` class="err"` : ""}>${esc(a.eligible)}<span>Eligible</span></div></div>
      ${a.gateFails && a.gateFails.length ? `<p class="flagline err">Eligibility not shown: ${esc(a.gateFails.join("; "))}. Not counted in the %.</p>` : ""}
      ${a.lowConfidence ? `<p class="flagline" style="color:var(--amber)">Low confidence: fewer than 4 scored requirements.</p>` : ""}
-     ${a.requirements ? reqTable(a) : ""}
+     ${freshMatch(a) ? reqTable(a) : ""}
      <p><strong>${esc(a.verdict)}</strong></p><p class="note">${esc(a.eligibility_note)}</p>
      ${a.strengths?.length ? `<h3>Strengths</h3><ul>${a.strengths.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
      ${a.gaps?.length ? `<h3>Gaps and the fix</h3><ul>${a.gaps.map(g => `<li><strong>${esc(g.gap)}</strong><br>${esc(g.fix)}</li>`).join("")}</ul>` : ""}
@@ -723,7 +735,7 @@ function matchBlock(key, company, title, location){
    <div class="actions"><button class="btn primary" id="matchBtn">${a ? "Match again" : "Match with Claude"}</button><span class="save-status" id="matchMsg" role="status" aria-live="polite"></span></div>`;
 }
 function reqTable(a){
-  const st = (r, f) => `<span class="st ${esc(r[f])}">${esc(r[f])}</span>${r[f + "_unverified"] ? `<span class="mk bad" title="Claude's quote wasn't found in your text, so this counts as missing">unverified</span>` : ""}`;
+  const st = (r, f) => `<span class="st ${esc(r[f])}">${esc(r[f])}</span>${r[f + "_claude"] ? `<span class="mk" title="Claude rated this ${esc(r[f + "_claude"])}; evidence from ${esc(r[f + "_source"])}, not work experience, counts one step lower">${esc(r[f + "_source"])} -1</span>` : ""}${r[f + "_unverified"] ? `<span class="mk bad" title="Claude's quote wasn't found in your text, so this counts as missing">unverified</span>` : ""}`;
   const ev = r => [r.now_evidence && `“${esc(r.now_evidence)}”`, r.planned_evidence && r.planned_evidence !== r.now_evidence && `Plan: “${esc(r.planned_evidence)}”`].filter(Boolean).join("<br>");
   return `<p class="note"><strong>${esc(reqTally(a, "now"))}</strong>. After planned work: ${esc(reqTally(a, "planned").replace(/^R/, "r"))}.</p>
    <div class="reqs"><table><thead><tr><th>Requirement</th><th>Type</th><th>Now</th><th>Planned</th><th>Evidence</th></tr></thead><tbody>
