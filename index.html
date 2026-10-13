@@ -391,6 +391,12 @@ function renderGoals(){
 }
 
 /* ---------- render router ---------- */
+/* Re-render without jumping the openings list back to the top (e.g. after saving a role). */
+function renderKeepScroll(){
+  const top = ($("#main .feed") || {}).scrollTop || 0;
+  render();
+  const f = $("#main .feed"); if(f) f.scrollTop = top;
+}
 function render(){
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === ui.tab));
   ({board:renderBoard, openings:renderOpenings, companies:renderCompanies, contacts:renderContacts})[ui.tab]();
@@ -510,7 +516,7 @@ function addListingItem(lid){
     added:today(), lastActivity:today(), savedAt:nowIso(), history:[{s:"Saved", d:today()}]};
   return id;
 }
-function saveListing(lid){ if(itemFor(lid)) return; addListingItem(lid); save(); renderGoals(); render(); }
+function saveListing(lid){ if(itemFor(lid)) return; addListingItem(lid); save(); renderGoals(); renderKeepScroll(); }
 function renderOpenings(){ $("#main").innerHTML = feedPanel(true); wireFeed(); }
 
 /* ---------- quick keyword fit (free, no Claude) ---------- */
@@ -752,13 +758,13 @@ function openListing(lid){
     let id = null;
     const ok = await runAction($("#saveL"), () => { id = addListingItem(lid); persist(); },
       {verify: () => storedMatches(s => s.items[id]), out:"#lMsg", ok:"Saved to apply later"});
-    if(ok){ renderGoals(); render(); reopenWith("#lMsg", "Saved to apply later", () => openListing(lid)); }
+    if(ok){ renderGoals(); renderKeepScroll(); reopenWith("#lMsg", "Saved to apply later", () => openListing(lid)); }
   };
   if($("#goItem")) $("#goItem").onclick = () => openItem(saved.id);
   $("#hideL").onclick = async () => {
     const ok = await runAction($("#hideL"), () => { S.hidden[lid] = true; persist(); },
       {busy:"Hiding…", ok:"Hidden", verify: () => storedMatches(s => s.hidden[lid]), out:"#lMsg"});
-    if(ok){ await sleep(700); closeDrawer(); render(); }
+    if(ok){ await sleep(700); closeDrawer(); renderKeepScroll(); }
   };
   wireMatch(lid, l.company, l.title, l.location, () => openListing(lid)); wireJd(lid);
 }
