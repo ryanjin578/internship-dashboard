@@ -19,7 +19,7 @@ from urllib.error import HTTPError
 from urllib.parse import parse_qs, quote, urlparse
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import (BAY, ECE_SALES, NOT_ECE, SEMI_NAME, STATES, grad_only, needs_clearance, DEFENSE, INTERN, OFFTRACK, ROOT, SENIOR, CompanyIndex, eligibility, http, is_us,
+from common import (BAY, ECE_SALES, FOREIGN, NOT_ECE, NONTECH_SALES, SEMI_NAME, STATES, grad_only, needs_clearance, DEFENSE, INTERN, OFFTRACK, ROOT, SENIOR, CompanyIndex, eligibility, http, is_us,
                     jget, lane_of, norm, strip_html, term_of)
 
 NOW = dt.datetime.now(dt.timezone.utc)
@@ -296,7 +296,7 @@ def a_avature(s):
             for href, text in links:
                 title = strip_html(text)
                 url = href if href.startswith("http") else f"https://{s['host']}{href}"
-                if not title or title.lower() in ("apply", "view", "more", "read more") or url in seen:
+                if not title or title.lower() in ("apply", "view", "more", "read more") or title.startswith("Share ") or url in seen:
                     continue
                 seen.add(url)
                 new += 1
@@ -551,7 +551,7 @@ def accept(row, comp_entry, from_repo):
         return None
     if SENIOR.search(title) and not INTERN.search(title):
         return None
-    if not is_us(row.get("location", "")):
+    if not is_us(row.get("location", "")) or FOREIGN.search(title):  # "Sales Intern (Riyadh, Saudi Arabia)"
         return None
     term = row.get("term") or term_of(title)
     if term is None or (row.get("term") and "2027" not in term and term != "Unspecified"):
@@ -563,6 +563,9 @@ def accept(row, comp_entry, from_repo):
         return None
     if not comp_entry:  # companies off your list: technical sales / FAE roles only
         if lane != "sales" or not ECE_SALES.search(title) or NOT_ECE.search(title):
+            return None
+    elif comp_entry.get("sales_only"):  # on your list for sales/FAE only (non-semiconductor companies)
+        if lane != "sales" or NOT_ECE.search(title) or NONTECH_SALES.search(title):
             return None
     if grad_only(title, row.get("desc", ""), row.get("degrees", [])) or needs_clearance(row.get("desc", "")):
         return None

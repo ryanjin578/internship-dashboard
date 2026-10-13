@@ -135,6 +135,8 @@ textarea{resize:vertical}
 .note{color:var(--muted);font-size:13px}
 .hist{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
 .src-bad{color:var(--red)}
+.nowrap{white-space:nowrap}
+.src{display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap}.src svg{width:14px;height:14px;flex:none}
 
 @media (max-width:900px){.board{grid-template-columns:1fr}.goals{grid-template-columns:1fr 1fr}.feed{max-height:none}.top{flex-wrap:wrap}}
 </style>
@@ -324,8 +326,47 @@ async function boot(){
     S.seeded = true;
   }
   for(const it of Object.values(S.items)) autoLink(it);  // attach saved roles to live listings once the feed has them
+  if(L.listings.length){ markClosedItems(); pruneStorage(); }  // only against a feed that actually loaded
   S.lastVisit = today(); save();
   renderMeta(); renderGoals(); render();
+}
+
+/* ---------- cleanup ---------- */
+/* The nightly run marks a listing closed after it misses 2 runs and drops it 30 days later, so a saved role
+   records the close itself (closedOn) and keeps showing "Posting closed" after the listing is gone. */
+function markClosedItems(){
+  for(const i of Object.values(S.items)){
+    if(!i.lid) continue;
+    const l = listingById(i.lid);
+    if(l && l.status === "open") delete i.closedOn;  // reposted
+    else if(!i.closedOn) i.closedOn = (l && l.closed_on) || today();
+  }
+}
+// Saved but never applied to, and the posting closed or the deadline passed
+const isStale = i => i.status === "Saved" && !!(i.closedOn || (i.deadline && i.deadline < today()));
+const staleWhy = i => i.closedOn ? `Posting closed ${fmt(i.closedOn)}` : `Deadline passed ${fmt(i.deadline)}`;
+/* Drop browser data for postings that are gone and not saved: hidden marks, Claude matches, pasted descriptions. */
+function pruneStorage(){
+  const keep = new Set(L.listings.map(l => l.id));
+  for(const i of Object.values(S.items)){ keep.add(i.id); if(i.lid) keep.add(i.lid); }
+  for(const store of [S.hidden, S.analyses, S.jds, S.jdsAt]) for(const k of Object.keys(store)) if(!keep.has(k)) delete store[k];
+}
+function openCleanup(){
+  const stale = Object.values(S.items).filter(isStale);
+  if(!openDrawer(`<h2>Clean up closed roles</h2>
+   <p class="note">Saved roles you haven't applied to, where the posting closed or the deadline passed. Roles you applied to stay on the board.</p>
+   ${stale.length ? `<ul class="hist">${stale.map(i => `<li><label><input type="checkbox" data-rm="${esc(i.id)}" checked> <strong>${esc(i.company)}</strong>, ${esc(i.title)}
+     <span class="sub">${esc(staleWhy(i))}</span></label></li>`).join("")}</ul>` : `<p class="note">Nothing to clean up.</p>`}
+   <div class="actions"><button class="btn primary" id="rmStale"${stale.length ? "" : " disabled"}>Remove selected</button><span class="save-status" id="cMsg" role="status" aria-live="polite"></span></div>`)) return;
+  $("#rmStale").onclick = async () => {
+    const gone = [...$("#drawer").querySelectorAll("[data-rm]:checked")].map(x => S.items[x.dataset.rm]);
+    if(!gone.length) return;
+    const ok = await runAction($("#rmStale"), () => { gone.forEach(i => delete S.items[i.id]); persist(); },
+      {busy:"Removing…", ok:`Removed ${gone.length}`, out:"#cMsg", verify: () => storedMatches(s => gone.map(i => s.items[i.id]))});
+    if(!ok){ gone.forEach(i => S.items[i.id] = i); return; }
+    pruneStorage(); save();
+    renderGoals(); renderKeepScroll(); await sleep(700); forceCloseDrawer();
+  };
 }
 
 /* ---------- linking saved roles to scraped listings ---------- */
@@ -418,7 +459,8 @@ function renderBoard(){
     <header><h2>Apply later</h2><span class="count">${items.length} roles, ${applied().length} applied</span>
       <select class="status-select" id="sortItems" aria-label="Sort"><option value="urgency">Most urgent first</option><option value="match"${ui.sortItems==="match"?" selected":""}>Best match first</option></select>
       <button class="btn small" id="matchAll">Match all with Claude</button><span class="save-status" id="matchAllMsg" role="status" aria-live="polite"></span>
-      <button class="btn small" id="addManual">Add role</button></header>
+      <button class="btn small" id="addManual">Add role</button>
+      ${items.some(isStale) ? `<button class="btn small" id="cleanUp">Clean up ${items.filter(isStale).length} closed</button>` : ""}</header>
     ${fu.cs.length ? `<div class="filters">${fu.cs.map(c => `<span class="chip due" data-contact="${esc(c.id)}" style="cursor:pointer">Follow up: ${esc(c.name)} (${esc(c.company)})</span>`).join("")}</div>` : ""}
     ${items.length ? `<table><thead><tr><th>Role</th><th>Status</th><th>Due</th><th>Match</th></tr></thead><tbody>
      ${items.map(itemRow).join("")}</tbody></table>` : `<div class="empty">Nothing saved yet. Add roles from the openings on the right.</div>`}
@@ -428,6 +470,7 @@ function renderBoard(){
   $("#sortItems").onchange = e => { ui.sortItems = e.target.value; render(); };
   $("#matchAll").onclick = matchAll;
   $("#addManual").onclick = () => openItem(null);
+  if($("#cleanUp")) $("#cleanUp").onclick = openCleanup;
   $("#main").querySelectorAll("tr.row").forEach(tr => tr.onclick = e => { if(e.target.tagName !== "SELECT") openItem(tr.dataset.id); });
   $("#main").querySelectorAll("select[data-status]").forEach(s => s.onchange = e => setStatus(s.dataset.status, e.target.value));
   $("#main").querySelectorAll("[data-contact]").forEach(c => c.onclick = () => openContact(c.dataset.contact));
@@ -437,7 +480,7 @@ function itemRow(i){
   const a = analysisFor(i), l = i.lid ? listingById(i.lid) : null;
   const quiet = ACTIVE.includes(i.status) ? days(i.lastActivity) : null;
   const flags = (l ? l.flags : []).map(f => `<span class="chip flag">${esc(f)}</span>`).join("");
-  const closed = l && l.status === "closed" ? `<span class="chip flag">Posting closed</span>` : "";
+  const closed = (l && l.status === "closed") || i.closedOn ? `<span class="chip flag">Posting closed</span>` : "";
   let due = "";
   if(i.deadline){ const d = days(today(), i.deadline); due = `<span class="chip ${d<=7 && d>=0 ? "due":""}">${fmt(i.deadline)}${d<0?" (passed)":""}</span>`; }
   if(quiet !== null && quiet >= S.settings.followDays) due += `<span class="chip due">Quiet ${quiet}d</span>`;
@@ -862,20 +905,50 @@ function fillFromPaste(text){
 }
 
 /* ---------- companies ---------- */
+/* Whether the nightly run reads this company's careers site. Icon + wording tell the states apart, not color. */
+const ICON_DASH = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const ICON_CLOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 5v3.2l2 1.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 function sourceState(name){
   const c = coByName(name);
-  if(!c || !c.sources || !c.sources.length) return {txt:"Repos only", cls:"sub"};
+  if(!c || !c.sources || !c.sources.length) return {key:"none", icon:ICON_DASH, txt:"Not read", sub:"Roles from GitHub lists only"};
   const ss = SRC.sources.filter(s => s.company === name);
-  if(!ss.length) return {txt:"Not run yet", cls:"sub"};
-  return ss.every(s => s.ok) ? {txt:"Official site", cls:"sub"} : {txt:"Feed failing", cls:"src-bad"};
+  if(!ss.length) return {key:"new", icon:ICON_CLOCK, txt:"Added", sub:"First read on the next nightly run"};
+  const bad = ss.filter(s => !s.ok).length;
+  if(bad) return {key:"failing", icon:ICON_X, txt:"Read failed", sub:ss.length > 1 ? `${bad} of ${ss.length} feeds failed last run` : "Failed on the last run"};
+  return {key:"ok", icon:ICON_CHECK, txt:"Read nightly", sub:`${ss.reduce((n, s) => n + (s.rows || 0), 0)} postings scanned last run`};
 }
 /* No working feed: the nightly run can't read this company's careers site, so you check it by hand. */
-function needsManual(name){ const t = sourceState(name).txt; return t === "Repos only" || t === "Feed failing"; }
+function needsManual(name){ const k = sourceState(name).key; return k === "none" || k === "failing"; }
 function checkedLabel(name){ const d = S.checked[name]; return d ? "Checked " + (d === today() ? "today" : fmt(d)) : "Never checked"; }
 function careersSearch(name){ return "https://www.google.com/search?q=" + encodeURIComponent(name + " careers internship"); }
+/* Timing: last cycle's real posting dates (collector/history.py, from Simplify) beat the hand-written window. */
+const mon = d => new Date(d + "T12:00").toLocaleDateString(undefined, {month:"short"});
+const shortWindow = w => (w || "").replace(/\b20(\d\d)\b/g, "'$1").replace(/\s*-\s*/g, "–").replace(/;\s*/g, ", ");  // "Oct 2026 - Jan 2027" -> "Oct '26–Jan '27"
+const dueIn = d => { const n = days(today(), d); return n === 0 ? "today" : n === 1 ? "tomorrow" : n > 0 ? `in ${n}d` : `${-n}d ago`; };
+const nextYear = d => (Number(d.slice(0,4)) + 1) + d.slice(4);
+function timingOf(c){
+  const lc = c.last_cycle, tc = c.this_cycle;
+  if(!lc) return {main: shortWindow(c.window) || "Unknown", sub: tc ? `Posting since ${fmt(tc.opened)}` : c.window ? "Your estimate" : "", why: ""};
+  return {main: lc.closed && mon(lc.closed) !== mon(lc.opened) ? `${mon(lc.opened)}–${mon(lc.closed)}` : `From ${mon(lc.opened)}`,
+    sub: tc ? `Posting since ${fmt(tc.opened)}` : `Last yr from ${fmt(lc.opened)}`,
+    why: `${lc.term}: ${lc.postings} US intern postings on Simplify, first on ${fmt(lc.opened)}${lc.closed ? ", half closed by " + fmt(lc.closed) : ""}.`
+      + (tc ? ` ${tc.term}: ${tc.postings} so far, first on ${fmt(tc.opened)}.` : "")};
+}
+/* Deadline: your saved role's deadline, else one the company stated, else when last year's postings closed. */
+function deadlineOf(c){
+  const mine = Object.values(S.items).filter(i => i.company === c.name && i.status === "Saved" && i.deadline && i.deadline >= today()).map(i => i.deadline).sort()[0];
+  if(mine) return {main: fmt(mine), sub: `Your saved role, ${dueIn(mine)}`, soon: days(today(), mine) <= 7};
+  if(c.deadline) return {main: fmt(c.deadline), sub: c.deadline < today() ? "Stated, passed" : `Stated, ${dueIn(c.deadline)}`, soon: c.deadline >= today() && days(today(), c.deadline) <= 7};
+  if(c.last_cycle && c.last_cycle.closed){
+    const d = nextYear(c.last_cycle.closed);
+    return {main: "~" + fmt(d), sub: d < today() ? "Last yr's had closed by now" : "When last yr's closed", soon: d >= today() && days(today(), d) <= 14};
+  }
+  return {main: "Rolling", sub: "No date known", soon: false};
+}
 function renderCompanies(){
   const f = ui.co, q = norm(f.q);
-  const openBy = {}; L.listings.forEach(l => { if(l.status === "open") openBy[l.company] = (openBy[l.company]||0) + 1; });
+  const openBy = {}, salesBy = {};
+  L.listings.forEach(l => { if(l.status === "open"){ openBy[l.company] = (openBy[l.company]||0) + 1; if(l.lane === "sales") salesBy[l.company] = (salesBy[l.company]||0) + 1; } });
   const rows = CO.filter(c => (!q || norm(c.name + " " + c.segment).includes(q)) && (!f.open || openBy[c.name]) && (!f.manual || needsManual(c.name)))
     .sort((a,b) => a.tier.localeCompare(b.tier) || (openBy[b.name]||0) - (openBy[a.name]||0) || a.name.localeCompare(b.name));
   $("#main").innerHTML = `<section class="panel"><header><h2>Companies</h2><span class="count">${rows.length} shown. Defense and national labs are excluded.</span></header>
@@ -883,11 +956,14 @@ function renderCompanies(){
     <button class="toggle" id="coOpen" aria-pressed="${f.open}">Has open roles</button>
     <button class="toggle" id="coManual" aria-pressed="${f.manual}">Check by hand (${CO.filter(c => needsManual(c.name)).length})</button>
     <button class="btn small" id="coAdd">Add role</button></div>
-   <table><thead><tr><th>Company</th><th>Tier</th><th>Open roles</th><th>Applied</th><th>Feed</th><th>Check by hand</th><th>Usually opens</th></tr></thead><tbody>
-   ${rows.map(c => { const s = sourceState(c.name), ap = Object.values(S.items).filter(i => i.company === c.name && i.status !== "Saved").length;
-     return `<tr class="row" data-co="${esc(c.name)}"><td><span class="co">${esc(c.name)}</span><div class="sub">${esc(c.segment)}${c.fit ? ", " + esc(c.fit) : ""}</div></td>
-      <td>${esc(c.tier)}</td><td>${openBy[c.name] || `<span class="sub">None posted</span>`}</td><td>${ap || ""}</td><td class="${s.cls}">${s.txt}</td>
-      <td>${needsManual(c.name) ? `<span class="chip due">Check by hand</span><div class="sub">${checkedLabel(c.name)}</div>` : ""}</td><td class="sub">${esc(c.window)}</td></tr>`; }).join("")}
+   <table><thead><tr><th>Company</th><th>Tier</th><th>Open roles</th><th>Sales / FAE</th><th>Applied</th><th>Timing</th><th>Deadline</th><th>Careers site</th><th>Check by hand</th></tr></thead><tbody>
+   ${rows.map(c => { const s = sourceState(c.name), t = timingOf(c), d = deadlineOf(c), ap = Object.values(S.items).filter(i => i.company === c.name && i.status !== "Saved").length;
+     return `<tr class="row" data-co="${esc(c.name)}"><td><span class="co">${esc(c.name)}</span><div class="sub">${esc(c.segment)}${c.fit ? ", " + esc(c.fit) : ""}${c.sales_only ? ", sales roles only" : ""}</div></td>
+      <td>${esc(c.tier)}</td><td>${openBy[c.name] || `<span class="sub">None posted</span>`}</td><td>${salesBy[c.name] || `<span class="sub">0</span>`}</td><td>${ap || ""}</td>
+      <td title="${esc(t.why)}"><span class="nowrap">${esc(t.main)}</span><div class="sub">${esc(t.sub)}</div></td>
+      <td><span class="nowrap">${d.soon ? `<span class="chip due">${esc(d.main)}</span>` : esc(d.main)}</span><div class="sub">${esc(d.sub)}</div></td>
+      <td><span class="src">${s.icon}${s.txt}</span><div class="sub">${s.sub}</div></td>
+      <td>${needsManual(c.name) ? `<span class="chip due">Check by hand</span><div class="sub">${checkedLabel(c.name)}</div>` : ""}</td></tr>`; }).join("")}
    </tbody></table></section>`;
   $("#coQ").oninput = e => { f.q = e.target.value; const p = e.target.selectionStart; renderCompanies(); const x = $("#coQ"); x.focus(); x.setSelectionRange(p,p); };
   $("#coOpen").onclick = () => { f.open = !f.open; renderCompanies(); };
@@ -902,7 +978,9 @@ function openCompany(name){
   const ss = SRC.sources.filter(s => s.company === name);
   openDrawer(`<h2>${esc(c.name)}</h2><p class="sub">${esc(c.tier)}, ${esc(c.segment)}${c.fit ? ", " + esc(c.fit) + " fit" : ""}</p>
    ${c.notes ? `<p>${esc(c.notes)}</p>` : ""}
-   <p class="sub">${c.window ? "Usually opens: " + esc(c.window) + ". " : ""}${c.gpa_floor ? "GPA floor: " + esc(c.gpa_floor) + ". " : ""}${c.bay_site ? "Bay Area site: " + esc(c.bay_site) + "." : ""}</p>
+   <p class="sub">Timing: ${esc(timingOf(c).main)}. ${esc(timingOf(c).why || (c.window ? "Your estimate: " + shortWindow(c.window) + "." : ""))}
+    Deadline: ${esc(deadlineOf(c).main)} (${esc(deadlineOf(c).sub.toLowerCase())}).
+    ${c.sales_only ? "Only sales / FAE roles are kept for this company. " : ""}${c.gpa_floor ? "GPA floor: " + esc(c.gpa_floor) + ". " : ""}${c.bay_site ? "Bay Area site: " + esc(c.bay_site) + "." : ""}</p>
    ${needsManual(name) ? `<h3>Check by hand</h3>
      <p class="note">The nightly run can't read this company's careers site. Look there yourself, then add any role you want to track.</p>
      <div class="actions"><a class="btn" href="${esc(careersSearch(name))}" target="_blank" rel="noopener">Find careers page</a>

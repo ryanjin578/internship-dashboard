@@ -15,12 +15,16 @@ After that it refreshes nightly at 5am Eastern. To refresh now: Actions > Nightl
 ## Files
 - `collector/collect.py`: nightly run. Repos + official career sites, filters, dedupes, writes `data/listings.json` and `data/sources.json` (feed health).
 - `collector/discover_sources.py`: finds career-site feeds from Simplify apply links for companies marked `"auto": true`.
-- `config/companies.json`: your company list (tier, segment, notes, feeds). Defense and national labs removed.
+- `collector/history.py`: run by hand every month or two. Fills each company's `last_cycle` (when last summer's postings opened and roughly when half had closed) and `this_cycle` from Simplify's posting history. The Companies tab's Timing and Deadline columns use these.
+- `config/companies.json`: your company list (tier, segment, notes, feeds). Defense and national labs removed. `"sales_only": true` keeps only sales / FAE roles from that company (used for companies outside semiconductors); `"deadline"` is an application deadline the company stated.
 - `config/sources.json`: which GitHub repos to read.
 - `index.html`: the dashboard.
 
+## Closed roles
+The nightly run marks a listing closed once it's missing from 2 runs in a row and drops it 30 days later; Openings only shows open ones. A role you saved remembers when its posting closed, so it keeps the "Posting closed" tag after the listing is gone. **Clean up** on the board lists saved roles you haven't applied to whose posting closed or whose deadline passed, and removes the ones you tick. Roles you applied to stay. On each load the page also drops browser data (hidden marks, Claude matches, pasted descriptions) for postings that are gone and not saved.
+
 ## Status of the career-site feeds
-As of 2026-10-06: 81 of 134 companies have an official feed; all of them except Siemens EDA passed a live test. The dashboard header shows any feed that fails in the nightly run. Companies without a feed still appear through the GitHub repos.
+As of 2026-10-12: 125 of 186 companies have an official feed. The 52 companies added on 2026-10-12 each had a US sales/FAE internship (or, for chip companies, any CompE internship) posted in the last two years; the evidence is in each entry's `notes`. Their feeds passed a live test except Siemens and Endress+Hauser (certificate errors on the setup PC only). As of 2026-10-06 the original 134 all passed except Siemens EDA. The dashboard header shows any feed that fails in the nightly run. Companies without a feed still appear through the GitHub repos.
 
 **Working feeds, by site type**
 - **Workday:** Micron, Intel, AMAT, KLA, ASML, ADI, Microchip, GlobalFoundries, Cadence, Arrow, Avnet, Marvell, NVIDIA, NXP, MPS, Allegro, Semtech, Samsung, Cisco, Lumentum, SiFive, Onto, Axcelis, Azenta, MKS, Entegris, Ambarella, Polar, Edwards, Air Liquide, Aptiv, Tokyo Electron, Broadcom, Silicon Labs, FormFactor, Digi-Key
@@ -33,7 +37,8 @@ As of 2026-10-06: 81 of 134 companies have an official feed; all of them except 
 - **Untested:** Siemens EDA (Avature, keeps titles containing "EDA"). It failed a certificate check on the PC used to set it up; check the dashboard after a nightly run.
 
 **No feed, and why**
-- **Turned off on purpose:** Juniper (Simplify linked a different company's board; Juniper is now part of HPE, whose feed would label all HPE jobs as Juniper). Sandisk (its SmartRecruiters board is correct but has 0 postings; restore `{"type": "smartrecruiters", "company": "Sandisk"}` when it posts).
+- **Turned off on purpose:** Juniper (Simplify linked a different company's board; Juniper is now part of HPE, which has its own sales-only entry).
+- **Added 2026-10-12, check by hand:** Schneider Electric, Trane, Amphenol, Mitsubishi Electric Automation, Lincoln Electric, AWS, Google Cloud, SiMa.ai, Atomic Semi (custom career sites, or a job board that disappeared).
 - **Blocks scripts or login-only:** Apple, Tesla, IBM (bot challenge), Mobileye, Luminar, Aurora
 - **Wrong company under the same name:** Nova, Nordic Semiconductor (`nordic` on Workday is Nordic Consulting), DuPont Electronics (now Qnity; `dupont` is DuPont proper), Tower Semiconductor
 - **Absorbed:** Ansys (Synopsys), Alphawave (Qualcomm), Untether AI (AMD), Richardson RFPD (Arrow)
@@ -54,6 +59,6 @@ To scan the whole history by hand: `gitleaks git . --redact -v`. The nightly Act
 `.gitignore` keeps dashboard backups (`internship-backup-*.json`), calendar exports (`*.ics`), `.env*` and `*.key` files out of the repo. Backups never include your API key, but they do include your resume and contacts.
 
 ## Tuning
-- Lanes and filters: regexes in `collector/common.py` (`SALES`, `SWE`, `HW`, `OFFTRACK`, `DEFENSE`).
+- Lanes and filters: regexes in `collector/common.py` (`SALES`, `SWE`, `HW`, `OFFTRACK`, `DEFENSE`; `NONTECH_SALES` is what sales-only companies drop: inside sales, SDR, sales ops).
 - Ranking: `score()` in `collector/collect.py` (sales/FAE first, then SWE, then HW; P1 > P2; Bay Area bonus; flags penalized).
 - Test one company: `python collector/collect.py --only "Micron,Astera Labs"`.

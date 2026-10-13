@@ -93,7 +93,7 @@ FOREIGN = re.compile(r"\b(canada|india|china|taiwan|japan|korea|germany|france|u
                      r"czech|bangalore|bengaluru|hyderabad|shanghai|beijing|toronto|ontario|quebec|munich|penang|hsinchu|"
                      r"tokyo|seoul|paris|london|amsterdam|gdansk|kaohsiung|noida|norway|sweden|denmark|finland|belgium|scotland|"
                      r"hungary|romania|portugal|greece|turkey|thailand|indonesia|new zealand|chile|argentina|costa rica|"
-                     r"armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest)\b", re.I)
+                     r"armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest|saudi arabia|riyadh|qatar|egypt|south africa)\b", re.I)
 
 
 def is_us(loc):
@@ -166,6 +166,9 @@ ECE_SALES = re.compile(r"\b(field applications?|fae|applications? engineer\w*|sa
                        r"technical marketing|marketing engineer|customer engineer\w*|product applications)\b", re.I)
 NOT_ECE = re.compile(r"\b(analyst|analytics|reporting|data|banking|bank|investments?|insurance|financial|retail|"
                      r"service sales|business analyst|crm|salesforce admin)\b", re.I)
+# For "sales_only" companies on the list (outside semiconductors): any sales/FAE role except non-technical desk sales
+NONTECH_SALES = re.compile(r"\b(inside sales|sales development|business development rep\w*|bdr|sdr|sales operations|sales ops|"
+                           r"sales enablement|sales analyst|revenue|retail|clinical)\b", re.I)
 SEMI_NAME = re.compile(r"\b(semiconductor\w*|semi|micro\w*|electronics?|silicon|devices|instruments|photonics|"
                        r"circuits?|chips?|logic|wafer|fab)\b", re.I)
 

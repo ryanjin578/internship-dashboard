@@ -18,7 +18,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 62,
+   "opened": "2025-08-28",
+   "closed": "2026-02-20"
+  }
  },
  {
   "name": "Intel",
@@ -39,7 +45,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 61,
+   "opened": "2025-08-21",
+   "closed": "2026-02-27"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 9,
+   "opened": "2026-09-02"
+  }
  },
  {
   "name": "Texas Instruments",
@@ -60,7 +77,13 @@
     "type": "oracle",
     "verified": "seen in Simplify apply links"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2025-09-09",
+   "closed": null
+  }
  },
  {
   "name": "Applied Materials",
@@ -83,7 +106,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 54,
+   "opened": "2025-12-17",
+   "closed": "2026-03-14"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-09-08"
+  }
  },
  {
   "name": "Lam Research",
@@ -129,7 +163,13 @@
     "type": "workday",
     "verified": "seen in Simplify apply links"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 79,
+   "opened": "2025-09-25",
+   "closed": "2026-03-03"
+  }
  },
  {
   "name": "ASML",
@@ -150,7 +190,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 27,
+   "opened": "2025-10-26",
+   "closed": "2025-12-22"
+  }
  },
  {
   "name": "Teradyne",
@@ -189,7 +235,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 44,
+   "opened": "2025-09-10",
+   "closed": "2025-11-30"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 3,
+   "opened": "2026-09-14"
+  }
  },
  {
   "name": "Analog Devices",
@@ -212,7 +269,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 16,
+   "opened": "2025-08-27",
+   "closed": "2026-03-10"
+  }
  },
  {
   "name": "Microchip",
@@ -235,7 +298,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 30,
+   "opened": "2025-09-25",
+   "closed": "2026-04-13"
+  }
  },
  {
   "name": "onsemi",
@@ -258,7 +327,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 16,
+   "opened": "2026-01-21",
+   "closed": "2026-03-17"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 7,
+   "opened": "2026-09-17"
+  }
  },
  {
   "name": "Silicon Labs",
@@ -303,7 +383,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 28,
+   "opened": "2025-08-09",
+   "closed": "2025-10-26"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 7,
+   "opened": "2026-08-26"
+  }
  },
  {
   "name": "SkyWater Technology",
@@ -380,7 +471,13 @@
     "board": "asteraearlycareer2027",
     "verified": "guess: untested"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 5,
+   "opened": "2026-02-06",
+   "closed": "2026-05-14"
+  }
  },
  {
   "name": "Cadence",
@@ -417,7 +514,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 80,
+   "opened": "2025-10-22",
+   "closed": "2026-03-14"
+  }
  },
  {
   "name": "Synopsys",
@@ -499,7 +602,13 @@
     "type": "workday",
     "verified": "seen in Simplify apply links"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 21,
+   "opened": "2026-03-05",
+   "closed": "2026-03-14"
+  }
  },
  {
   "name": "Marvell",
@@ -527,7 +636,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 50,
+   "opened": "2025-09-09",
+   "closed": "2025-11-03"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 58,
+   "opened": "2026-09-04"
+  }
  },
  {
   "name": "Rivian",
@@ -554,7 +674,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 25,
+   "opened": "2025-11-14",
+   "closed": "2026-03-18"
+  }
  },
  {
   "name": "AMD",
@@ -575,7 +701,12 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 59,
+   "opened": "2026-08-21"
+  }
  },
  {
   "name": "NVIDIA",
@@ -596,7 +727,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 48,
+   "opened": "2025-09-03",
+   "closed": "2026-02-03"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 41,
+   "opened": "2026-08-19"
+  }
  },
  {
   "name": "Qualcomm",
@@ -615,7 +757,13 @@
     "type": "eightfold",
     "verified": "pcsx API tested 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2025-09-03",
+   "closed": "2025-10-21"
+  }
  },
  {
   "name": "Infineon",
@@ -657,7 +805,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 14,
+   "opened": "2025-10-17",
+   "closed": "2026-03-13"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 14,
+   "opened": "2026-09-07"
+  }
  },
  {
   "name": "STMicroelectronics",
@@ -690,7 +849,12 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 10,
+   "opened": "2026-09-24"
+  }
  },
  {
   "name": "Nordic Semiconductor",
@@ -725,7 +889,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2026-03-11",
+   "closed": "2026-03-11"
+  }
  },
  {
   "name": "Allegro MicroSystems",
@@ -766,7 +936,13 @@
     "host": "careers.qorvo.com",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 33,
+   "opened": "2025-08-20",
+   "closed": "2025-09-03"
+  }
  },
  {
   "name": "Skyworks",
@@ -784,7 +960,13 @@
     "host": "careers.skyworksinc.com",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 18,
+   "opened": "2025-08-17",
+   "closed": "2025-08-25"
+  }
  },
  {
   "name": "Power Integrations",
@@ -906,7 +1088,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 7,
+   "opened": "2026-01-21",
+   "closed": null
+  }
  },
  {
   "name": "Samsung Semiconductor US",
@@ -943,7 +1131,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 72,
+   "opened": "2025-09-23",
+   "closed": "2026-02-03"
+  }
  },
  {
   "name": "Western Digital",
@@ -964,7 +1158,19 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 58,
+   "opened": "2025-09-16",
+   "closed": "2026-03-04"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-07-31"
+  },
+  "deadline": "2026-10-20"
  },
  {
   "name": "Seagate",
@@ -982,7 +1188,13 @@
     "host": "seagatecareers.com",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 37,
+   "opened": "2025-09-05",
+   "closed": "2025-10-10"
+  }
  },
  {
   "name": "Solidigm",
@@ -1001,7 +1213,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2026-03-14",
+   "closed": "2026-03-27"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 4,
+   "opened": "2026-09-05"
+  }
  },
  {
   "name": "Kioxia America",
@@ -1022,7 +1245,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 5,
+   "opened": "2026-03-04",
+   "closed": "2026-03-09"
+  }
  },
  {
   "name": "Credo Semiconductor",
@@ -1053,7 +1282,13 @@
     "host": "careers-rambus.icims.com",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2025-09-26",
+   "closed": "2025-10-03"
+  }
  },
  {
   "name": "Alphawave Semi",
@@ -1110,7 +1345,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 32,
+   "opened": "2025-08-21",
+   "closed": "2026-02-25"
+  }
  },
  {
   "name": "Arista Networks",
@@ -1167,7 +1408,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 35,
+   "opened": "2026-03-03",
+   "closed": "2026-03-17"
+  }
  },
  {
   "name": "Lumentum",
@@ -1188,7 +1435,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 11,
+   "opened": "2026-03-13",
+   "closed": "2026-04-07"
+  }
  },
  {
   "name": "Ansys",
@@ -1241,7 +1494,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 4,
+   "opened": "2026-04-07",
+   "closed": "2026-04-07"
+  }
  },
  {
   "name": "Onto Innovation",
@@ -1262,7 +1521,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 11,
+   "opened": "2026-04-03",
+   "closed": "2026-04-21"
+  }
  },
  {
   "name": "Axcelis",
@@ -1369,7 +1634,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 16,
+   "opened": "2025-09-09",
+   "closed": "2025-09-26"
+  }
  },
  {
   "name": "Entegris",
@@ -1390,7 +1661,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 9,
+   "opened": "2025-12-22",
+   "closed": "2026-02-20"
+  }
  },
  {
   "name": "Advanced Energy",
@@ -1408,7 +1685,13 @@
     "host": "jobs.advanced-energy.com",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 7,
+   "opened": "2026-03-02",
+   "closed": "2026-03-11"
+  }
  },
  {
   "name": "Ultra Clean Holdings",
@@ -1578,7 +1861,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 8,
+   "opened": "2026-08-31",
+   "closed": "2026-08-31"
+  }
  },
  {
   "name": "Mouser Electronics",
@@ -1614,7 +1903,13 @@
     "site": "Digi-Key",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 3,
+   "opened": "2025-10-13",
+   "closed": null
+  }
  },
  {
   "name": "TTI Inc",
@@ -1638,7 +1933,18 @@
   "window": "Sep - Dec 2026",
   "gpa_floor": "",
   "bay_site": "Yes",
-  "notes": ""
+  "notes": "",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 34,
+   "opened": "2025-12-10",
+   "closed": "2026-06-07"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 4,
+   "opened": "2026-09-02"
+  }
  },
  {
   "name": "Lucid Motors",
@@ -1659,7 +1965,13 @@
     "type": "greenhouse",
     "verified": "seen in Simplify apply links"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 26,
+   "opened": "2025-09-12",
+   "closed": "2025-12-23"
+  }
  },
  {
   "name": "Mobileye",
@@ -1691,7 +2003,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 7,
+   "opened": "2026-02-25",
+   "closed": "2026-07-21"
+  }
  },
  {
   "name": "indie Semiconductor",
@@ -1724,7 +2042,18 @@
   "window": "Aug - Oct 2026",
   "gpa_floor": "",
   "bay_site": "Yes",
-  "notes": ""
+  "notes": "",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 26,
+   "opened": "2025-07-08",
+   "closed": "2025-10-13"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 4,
+   "opened": "2026-08-24"
+  }
  },
  {
   "name": "MediaTek USA",
@@ -1767,7 +2096,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2025-07-19",
+   "closed": "2026-04-27"
+  }
  },
  {
   "name": "Groq",
@@ -1953,7 +2288,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 94,
+   "opened": "2025-09-10",
+   "closed": "2026-03-26"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 9,
+   "opened": "2026-08-31"
+  }
  },
  {
   "name": "EV Group",
@@ -2026,7 +2372,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 5,
+   "opened": "2026-02-26",
+   "closed": "2026-02-26"
+  }
  },
  {
   "name": "Air Liquide Electronics",
@@ -2049,7 +2401,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 3,
+   "opened": "2026-01-30",
+   "closed": null
+  }
  },
  {
   "name": "Linde Electronics",
@@ -2197,7 +2555,18 @@
     "board": "waymo",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 61,
+   "opened": "2025-09-09",
+   "closed": "2025-10-03"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 51,
+   "opened": "2026-09-03"
+  }
  },
  {
   "name": "Zoox",
@@ -2216,7 +2585,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 30,
+   "opened": "2025-11-08",
+   "closed": "2026-04-17"
+  }
  },
  {
   "name": "Aurora Innovation",
@@ -2227,7 +2602,13 @@
   "window": "Sep - Dec 2026",
   "gpa_floor": "",
   "bay_site": "Yes",
-  "notes": ""
+  "notes": "",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 4,
+   "opened": "2025-11-03",
+   "closed": "2026-02-21"
+  }
  },
  {
   "name": "Nuro",
@@ -2245,7 +2626,13 @@
     "board": "nuro",
     "verified": "tested live 2026-10-06"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 8,
+   "opened": "2025-08-27",
+   "closed": null
+  }
  },
  {
   "name": "Luminar",
@@ -2306,7 +2693,13 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2025-09-07",
+   "closed": "2025-11-18"
+  }
  },
  {
   "name": "ZF North America",
@@ -2358,7 +2751,13 @@
     "type": "smartrecruiters",
     "verified": "seen in Simplify apply links; API answers, 0 postings on 2026-10-12"
    }
-  ]
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 27,
+   "opened": "2025-12-16",
+   "closed": "2026-02-24"
+  }
  },
  {
   "name": "IBM",
@@ -2371,7 +2770,13 @@
   "window": "",
   "gpa_floor": "",
   "bay_site": "",
-  "notes": "Pursuing Technical Sales Engineer Intern + Co-Op (Entry-Level Sales Program 2027). Careers site (ibmglobal.avature.net) blocks scripts: check by hand."
+  "notes": "Pursuing Technical Sales Engineer Intern + Co-Op (Entry-Level Sales Program 2027). Careers site (ibmglobal.avature.net) blocks scripts: check by hand.",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 3,
+   "opened": "2025-08-29",
+   "closed": null
+  }
  },
  {
   "name": "Tokyo Electron",
@@ -2394,7 +2799,18 @@
     "verified": "seen in Simplify apply links"
    }
   ],
-  "auto": true
+  "auto": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 16,
+   "opened": "2025-09-12",
+   "closed": "2025-10-25"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 7,
+   "opened": "2026-09-07"
+  }
  },
  {
   "name": "Cirrus Logic",
@@ -2413,6 +2829,1287 @@
     "api": "api.eu.lever.co",
     "verified": "tested live 2026-10-06"
    }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2025-10-14",
+   "closed": "2026-02-26"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 7,
+   "opened": "2026-10-05"
+  }
+ },
+ {
+  "name": "ABB",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineering + Electrification Sales interns (14 sales roles open). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "abb.wd3.myworkdayjobs.com",
+    "site": "external_career_page",
+    "tenant": "abb",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 26,
+   "opened": "2025-08-26",
+   "closed": "2026-02-11"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-09-08"
+  }
+ },
+ {
+  "name": "Rockwell Automation",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Intern, Technical Sales & Consulting (USA); Application Engineer intern. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "rockwellautomation.wd1.myworkdayjobs.com",
+    "site": "External_Rockwell_Automation",
+    "tenant": "rockwellautomation",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   },
+   {
+    "type": "workday",
+    "host": "rockwellautomation.wd1.myworkdayjobs.com",
+    "tenant": "rockwellautomation",
+    "site": "External-Rockwell-Automation-Early-Careers",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 26,
+   "opened": "2025-09-05",
+   "closed": "2026-03-11"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 6,
+   "opened": "2026-08-10"
+  }
+ },
+ {
+  "name": "Emerson Electric",
+  "aliases": [
+   "Emerson"
+  ],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineering intern, Sales and Application Engineer co-op. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "hdjq.fa.us2.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 46,
+   "opened": "2025-09-04",
+   "closed": "2026-01-28"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 6,
+   "opened": "2026-09-11"
+  }
+ },
+ {
+  "name": "Eaton",
+  "aliases": [
+   "Eaton Corporation"
+  ],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Internship Program: Technical Sales / Applications Engineering. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "domain": "eaton.com",
+    "host": "eaton.eightfold.ai",
+    "type": "eightfold",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2025-09-23",
+   "closed": "2025-09-25"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-09-01"
+  }
+ },
+ {
+  "name": "Siemens",
+  "aliases": [
+   "Siemens AG",
+   "Siemens Smart Infrastructure",
+   "Siemens Digital Industries"
+  ],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Smart Infrastructure sales internships (Building Automation, Fire & Life Safety), Summer 2027. Feed fails on Ryan's PC (TLS); works in the Action. web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "type": "avature",
+    "host": "jobs.siemens.com",
+    "portal": "en_US/externaljobs",
+    "verified": "same portal as Siemens EDA, which reads fine in the Action"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 8,
+   "opened": "2025-09-27",
+   "closed": "2025-09-27"
+  }
+ },
+ {
+  "name": "Schneider Electric",
+  "aliases": [
+   "Schneider"
+  ],
+  "tier": "P2",
+  "segment": "Electrical & connectivity (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "2027 Summer Sales Intern (Dallas); Sales Engineering internship at ASCO. Careers site not readable: check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true
+ },
+ {
+  "name": "Honeywell",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineer intern. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "ibqbjb.fa.ocs.oraclecloud.com",
+    "site": "Honeywell",
+    "type": "oracle",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 19,
+   "opened": "2025-09-26",
+   "closed": "2025-10-22"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 13,
+   "opened": "2026-08-25"
+  }
+ },
+ {
+  "name": "GE Vernova",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Controls Application Engineering intern, Application Engineer co-op. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "type": "workday",
+    "host": "gevernova.wd5.myworkdayjobs.com",
+    "tenant": "gevernova",
+    "site": "vernova_externalsite",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 102,
+   "opened": "2025-08-15",
+   "closed": "2026-02-17"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 38,
+   "opened": "2026-08-04"
+  }
+ },
+ {
+  "name": "Hitachi Energy",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Applications Engineering internship/co-op. Feed is all of Hitachi, so other Hitachi sales roles can show up here. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "hitachi.wd1.myworkdayjobs.com",
+    "site": "hitachi",
+    "tenant": "hitachi",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 4,
+   "opened": "2025-10-26",
+   "closed": "2025-11-08"
+  }
+ },
+ {
+  "name": "Schweitzer Engineering Laboratories",
+  "aliases": [
+   "SEL"
+  ],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineering intern (power-system protection; very EE/CompE). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "selinc.wd1.myworkdayjobs.com",
+    "site": "SEL",
+    "tenant": "selinc",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 24,
+   "opened": "2025-08-22",
+   "closed": "2026-02-25"
+  }
+ },
+ {
+  "name": "Regal Rexnord",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineer intern/co-op. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "regalrexnord.wd1.myworkdayjobs.com",
+    "site": "careers",
+    "tenant": "regalrexnord",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 7,
+   "opened": "2025-09-15",
+   "closed": "2025-09-17"
+  }
+ },
+ {
+  "name": "Vertiv",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Building tech & HVAC (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Tech Sales Thermal Application Engineer intern, Sales intern (data center power/cooling). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "egup.fa.us2.oraclecloud.com",
+    "site": "CX",
+    "type": "oracle",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 31,
+   "opened": "2025-08-27",
+   "closed": "2026-04-10"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 31,
+   "opened": "2026-08-10"
+  }
+ },
+ {
+  "name": "Johnson Controls",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Building tech & HVAC (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "BEST Sales internship program (HVAC, Fire, Controls technical sales). web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "host": "jci.wd5.myworkdayjobs.com",
+    "site": "JCI",
+    "tenant": "jci",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 18,
+   "opened": "2025-11-04",
+   "closed": "2026-03-12"
+  }
+ },
+ {
+  "name": "Trane Technologies",
+  "aliases": [
+   "Trane"
+  ],
+  "tier": "P2",
+  "segment": "Building tech & HVAC (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "2027 Technical Sales Intern (Equipment, Services, Controls). Careers site not readable: check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 40,
+   "opened": "2025-08-25",
+   "closed": "2026-03-11"
+  }
+ },
+ {
+  "name": "Daikin Applied",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Building tech & HVAC (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Controls Application Engineering intern - Sales. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "daikinapplied.wd1.myworkdayjobs.com",
+    "site": "Daikin-Careers",
+    "tenant": "daikinapplied",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 4,
+   "opened": "2025-11-28",
+   "closed": "2025-11-28"
+  }
+ },
+ {
+  "name": "Keyence",
+  "aliases": [
+   "KEYENCE Corporation of America"
+  ],
+  "tier": "P2",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Technical Sales Internship Summer 2027 (Itasca, IL; juniors). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "careers.keyence.com",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "Hubbell",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Electrical & connectivity (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "2027 Summer Intern: Sales (several regions); Tech Sales Engineering intern 2026. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "careers.hubbell.com",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "TE Connectivity",
+  "aliases": [
+   "TE"
+  ],
+  "tier": "P2",
+  "segment": "Electrical & connectivity (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Field Application Engineer intern, Sales intern (connectors and sensors). web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "careers.te.com",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "Amphenol",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Electrical & connectivity (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Field Sales Engineering intern (Santa Clara), FAE intern. Careers site not readable: check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true
+ },
+ {
+  "name": "Mitsubishi Electric Automation",
+  "aliases": [
+   "Mitsubishi Electric"
+  ],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Sales Engineer intern (Vernon Hills, IL), 2024. Check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true
+ },
+ {
+  "name": "Lincoln Electric",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Technical Sales Summer 2027 internship. Check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true
+ },
+ {
+  "name": "Endress+Hauser",
+  "aliases": [
+   "Endress Hauser"
+  ],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Summer engineering internship with a Sales track (Greenwood IN, Houston). Feed fails on Ryan's PC (TLS). web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "careers.endress.com",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "TRUMPF",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineering intern/co-op, Technical Engineering Sales intern. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "trumpf.wd3.myworkdayjobs.com",
+    "site": "TRUMPF_Students",
+    "tenant": "trumpf",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "Avery Dennison",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Electrical & connectivity (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "RFID Applications Engineering co-op (Summer 2027). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "type": "smartrecruiters",
+    "company": "AveryDennison",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 4,
+   "opened": "2025-09-05",
+   "closed": null
+  }
+ },
+ {
+  "name": "BorgWarner",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Software Application Engineering intern. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "borgwarner.wd5.myworkdayjobs.com",
+    "site": "BorgWarner_Careers",
+    "tenant": "borgwarner",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 31,
+   "opened": "2025-08-07",
+   "closed": "2026-04-07"
+  }
+ },
+ {
+  "name": "HARMAN",
+  "aliases": [
+   "HARMAN International"
+  ],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Customer Engineering intern. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "harman.wd3.myworkdayjobs.com",
+    "site": "HARMAN",
+    "tenant": "harman",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 24,
+   "opened": "2026-01-22",
+   "closed": "2026-02-20"
+  }
+ },
+ {
+  "name": "CommScope",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Field Application Engineering intern. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "jobs.commscope.com",
+    "type": "successfactors",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 9,
+   "opened": "2025-12-10",
+   "closed": "2025-12-12"
+  }
+ },
+ {
+  "name": "Motorola Solutions",
+  "aliases": [
+   "Motorola"
+  ],
+  "tier": "P2",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Presales Systems Engineer internship 2027. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "motorolasolutions.wd5.myworkdayjobs.com",
+    "site": "Careers",
+    "tenant": "motorolasolutions",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 75,
+   "opened": "2025-08-17",
+   "closed": "2025-11-20"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 20,
+   "opened": "2026-07-15"
+  }
+ },
+ {
+  "name": "Nokia",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Customer Engineering co-op. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com",
+    "site": "CX_1",
+    "type": "oracle",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 135,
+   "opened": "2025-08-27",
+   "closed": "2025-12-17"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-09-04"
+  }
+ },
+ {
+  "name": "Hewlett Packard Enterprise",
+  "aliases": [
+   "HPE"
+  ],
+  "tier": "P2",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Presales and sales internships; owns Juniper Networks since 2025. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "hpe.wd5.myworkdayjobs.com",
+    "site": "Jobsathpe",
+    "tenant": "hpe",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 27,
+   "opened": "2025-08-17",
+   "closed": "2025-09-04"
+  }
+ },
+ {
+  "name": "Dell Technologies",
+  "aliases": [
+   "Dell"
+  ],
+  "tier": "P2",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Presales intern, OEM Solutions Sales Engineering intern, NextGen Sales Academy. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "type": "oracle",
+    "host": "iawmqy.fa.ocs.oraclecloud.com",
+    "site": "careers",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 15,
+   "opened": "2025-08-27",
+   "closed": "2026-01-27"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 4,
+   "opened": "2026-09-10"
+  }
+ },
+ {
+  "name": "Lenovo",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Lenovo Accelerated Sales Rotational (LASR) Program intern. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "type": "avature",
+    "host": "jobs.lenovo.com",
+    "portal": "en_US/careers",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true
+ },
+ {
+  "name": "Amazon Web Services",
+  "aliases": [
+   "AWS"
+  ],
+  "tier": "P2",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Solutions Architect Intern, Summer 2027 (Seattle, Dallas). amazon.jobs isn't readable: check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true
+ },
+ {
+  "name": "Google Cloud",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Customer and Partner Solutions Engineering Intern, Summer 2027 (stated deadline Oct 9, 2026). Check by hand. web: sales/FAE internship posting found, 2025-2027",
+  "sales_only": true,
+  "deadline": "2026-10-09"
+ },
+ {
+  "name": "Snowflake",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Solution Engineering intern (2025). web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "org": "snowflake",
+    "type": "ashby",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 11,
+   "opened": "2025-12-23",
+   "closed": "2026-02-23"
+  }
+ },
+ {
+  "name": "Field AI",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Industrial automation & power (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Field Application Engineer intern (robotics startup). Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "company": "field-ai",
+    "type": "lever",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 7,
+   "opened": "2026-02-13",
+   "closed": "2026-06-05"
+  }
+ },
+ {
+  "name": "Itron",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Sales Specialist intern (smart meters / IoT). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "itron.wd5.myworkdayjobs.com",
+    "site": "Early_Careers",
+    "tenant": "itron",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 8,
+   "opened": "2026-02-05",
+   "closed": "2026-04-24"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 6,
+   "opened": "2026-09-28"
+  }
+ },
+ {
+  "name": "GE HealthCare",
+  "aliases": [
+   "GE Healthcare"
+  ],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Commercial Sales Leadership Program internship (imaging equipment). live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "gehc.wd5.myworkdayjobs.com",
+    "site": "GEHC_ExternalSite",
+    "tenant": "gehc",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 30,
+   "opened": "2025-09-02",
+   "closed": "2026-03-14"
+  },
+  "this_cycle": {
+   "term": "Summer 2027",
+   "postings": 5,
+   "opened": "2026-07-20"
+  }
+ },
+ {
+  "name": "Cloudflare",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "IT, cloud & networking (sales)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Product Marketing Engineer intern. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "board": "cloudflare",
+    "type": "greenhouse",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "sales_only": true,
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 17,
+   "opened": "2025-10-30",
+   "closed": "2026-03-19"
+  }
+ },
+ {
+  "name": "Altera",
+  "aliases": [
+   "Altera Corporation"
+  ],
+  "tier": "P2",
+  "segment": "Fabless Compute & AI",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "FPGA maker spun out of Intel in 2025. Hardware and software interns. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "type": "workday",
+    "host": "altera.wd1.myworkdayjobs.com",
+    "tenant": "altera",
+    "site": "altera",
+    "verified": "seen in Simplify apply links"
+   }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2026-02-11",
+   "closed": "2026-03-30"
+  }
+ },
+ {
+  "name": "Littelfuse",
+  "aliases": [],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Power semiconductors and circuit protection; FAE-heavy sales org. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "littelfuse.wd1.myworkdayjobs.com",
+    "site": "Littelfuse-Careers",
+    "tenant": "littelfuse",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
   ]
+ },
+ {
+  "name": "Vishay Intertechnology",
+  "aliases": [
+   "Vishay"
+  ],
+  "tier": "P2",
+  "segment": "Analog / MCU / Power",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Discrete semiconductors and passives. live: sales/FAE intern roles on its careers site, 2026-10-12",
+  "sources": [
+   {
+    "host": "vishay.wd3.myworkdayjobs.com",
+    "site": "VishayCareers",
+    "tenant": "vishay",
+    "type": "workday",
+    "verified": "checked 2026-10-12"
+   }
+  ]
+ },
+ {
+  "name": "Murata Electronics",
+  "aliases": [
+   "Murata"
+  ],
+  "tier": "P3",
+  "segment": "Analog / MCU / Power",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Application Engineering co-op; RFIC and PMIC design interns. web: sales/FAE internship posting found, 2025-2027",
+  "sources": [
+   {
+    "type": "successfactors",
+    "host": "jobs.murata.com",
+    "verified": "checked 2026-10-12"
+   }
+  ]
+ },
+ {
+  "name": "MaxLinear",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Interconnect / Networking",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "RF and broadband SoCs (Carlsbad). Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "host": "careersus-maxlinear.icims.com",
+    "type": "icims",
+    "verified": "checked 2026-10-12"
+   }
+  ]
+ },
+ {
+  "name": "Impinj",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Analog / MCU / Power",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "RFID chips (Seattle). Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "board": "impinjexternal",
+    "type": "greenhouse",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2026-02-06",
+   "closed": null
+  }
+ },
+ {
+  "name": "Etched",
+  "aliases": [
+   "Etched.ai"
+  ],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Transformer ASIC startup. Interns posted most cycles. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "org": "Etched",
+    "type": "ashby",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 13,
+   "opened": "2025-12-08",
+   "closed": null
+  }
+ },
+ {
+  "name": "Lightmatter",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Photonic interconnect startup. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "board": "lightmatter",
+    "type": "greenhouse",
+    "verified": "checked 2026-10-12"
+   }
+  ]
+ },
+ {
+  "name": "d-Matrix",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "AI inference chip startup. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "org": "d-Matrix",
+    "type": "ashby",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 8,
+   "opened": "2026-01-27",
+   "closed": "2026-04-29"
+  }
+ },
+ {
+  "name": "MatX",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "LLM chip startup. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "type": "ashby",
+    "org": "matx",
+    "verified": "checked 2026-10-12"
+   }
+  ]
+ },
+ {
+  "name": "Quadric",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "NPU IP startup (Burlingame). Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "sources": [
+   {
+    "type": "ashby",
+    "org": "quadric",
+    "verified": "checked 2026-10-12"
+   }
+  ],
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 6,
+   "opened": "2026-04-28",
+   "closed": "2026-05-19"
+  }
+ },
+ {
+  "name": "SiMa.ai",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Edge AI SoC startup; Application Engineering intern. Check by hand. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 3,
+   "opened": "2026-08-01",
+   "closed": "2026-08-01"
+  }
+ },
+ {
+  "name": "Atomic Semi",
+  "aliases": [],
+  "tier": "P3",
+  "segment": "Startups (silicon)",
+  "fit": "",
+  "window": "",
+  "gpa_floor": "",
+  "bay_site": "",
+  "notes": "Small-fab startup. Its Ashby job board is gone (404 on 2026-10-12): check by hand. Simplify: US sales/FAE intern postings in the Summer 2026 or 2027 cycle",
+  "last_cycle": {
+   "term": "Summer 2026",
+   "postings": 3,
+   "opened": "2025-12-01",
+   "closed": null
+  }
  }
 ]
