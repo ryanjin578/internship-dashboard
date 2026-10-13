@@ -12,6 +12,7 @@
    "url": "https://raw.githubusercontent.com/Khushsj30/hardware-internships-2027/main/README.md"}
  ],
  "detail_fetch_cap": 600,
- "detail_time_budget_s": 240,
+ "detail_time_budget_s": 480,
+ "recheck_per_host": 40,
  "close_after_missed_runs": 2
 }

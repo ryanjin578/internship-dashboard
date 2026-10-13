@@ -28,6 +28,11 @@ COMPANIES = json.loads((ROOT / "config/companies.json").read_text())
 CFG = json.loads((ROOT / "config/sources.json").read_text())
 IDX = CompanyIndex(COMPANIES)
 QUERIES = ["intern", "co-op"]
+DESC_CAP = 8000  # stored text; hashes, deadlines and pay are read from the full text
+
+
+class Gone(Exception):
+    """The job page says the posting no longer exists (404/410, an empty record, or a 'no longer available' page)."""
 
 
 # ---------- career-site adapters: each returns raw rows ----------
@@ -58,7 +63,7 @@ def a_workday(s):
 def a_greenhouse(s):
     d = jget(f"https://boards-api.greenhouse.io/v1/boards/{s['board']}/jobs?content=true")
     return [{"title": j.get("title", ""), "location": (j.get("location") or {}).get("name", ""),
-             "url": j.get("absolute_url", ""), "desc": strip_html(j.get("content", ""))} for j in d.get("jobs", [])]
+             "url": j.get("absolute_url", ""), "desc": strip_html(j.get("content", "")), "full": True} for j in d.get("jobs", [])]
 
 
 def a_smartrecruiters(s):
@@ -118,13 +123,18 @@ def a_eightfold(s):
 def a_ashby(s):
     d = jget(f"https://api.ashbyhq.com/posting-api/job-board/{s['org']}")
     return [{"title": j.get("title", ""), "location": j.get("location", ""), "url": j.get("jobUrl", ""),
-             "desc": j.get("descriptionPlain", "")} for j in d.get("jobs", [])]
+             "desc": j.get("descriptionPlain", ""), "full": True} for j in d.get("jobs", [])]
+
+
+def _lever_text(j):
+    lists = " ".join(f"{x.get('text', '')}\n{strip_html(x.get('content', ''))}" for x in j.get("lists") or [])
+    return strip_html(f"{j.get('descriptionPlain', '')}\n{lists}\n{j.get('additionalPlain', '')}")
 
 
 def a_lever(s):
     d = jget(f"https://{s.get('api', 'api.lever.co')}/v0/postings/{s['company']}?mode=json")  # EU boards: "api": "api.eu.lever.co"
     return [{"title": j.get("text", ""), "location": (j.get("categories") or {}).get("location", ""),
-             "url": j.get("hostedUrl", ""), "desc": j.get("descriptionPlain", "")} for j in d]
+             "url": j.get("hostedUrl", ""), "desc": _lever_text(j), "full": True} for j in d]
 
 
 def a_jibe(s):
@@ -136,7 +146,7 @@ def a_jibe(s):
             rows.append({"title": j.get("title", ""),
                          "location": ", ".join(x for x in [j.get("city"), j.get("state"), j.get("country")] if x),
                          "url": f"https://{s['host']}/jobs/{j.get('req_id') or j.get('slug')}",
-                         "desc": strip_html(j.get("description", ""))})
+                         "desc": strip_html(j.get("description", "")), "full": True})
     return rows
 
 
@@ -341,33 +351,59 @@ def _html_description(url):
         txt = strip_html(body)
         if txt and txt not in parts:
             parts.append(txt)
+    if not parts and CLOSED_PAGE.search(strip_html(h)[:20000]):
+        raise Gone("page says the job is closed")
     return "\n".join(parts)
 
 
+# Only checked on pages with no description, so a posting that mentions these words isn't mistaken for a closed one
+CLOSED_PAGE = re.compile(r"no longer (available|accepting|open|active|posted)|position has been filled|"
+                         r"(job|posting|position|page)( you are looking for)? (was |is |could )?not( be)? found|"
+                         r"this (job|position|posting|requisition) (has )?(expired|closed|is closed|been closed)", re.I)
+
+
 def fetch_detail(d):
+    """Full description text for a detail pointer; raises Gone when the site says the posting no longer exists."""
+    try:
+        return _fetch_detail(d)
+    except HTTPError as e:
+        if e.code in (404, 410):  # Workday, Greenhouse and Lever answer 404 for a removed posting
+            raise Gone(f"HTTP {e.code}")
+        raise
+
+
+def _fetch_detail(d):
     kind, url = d[0], d[1]
     if kind == "workday":
         return strip_html(jget(url).get("jobPostingInfo", {}).get("jobDescription", ""))
     if kind == "smartrecruiters":
-        secs = jget(url).get("jobAd", {}).get("sections", {})
+        j = jget(url)
+        if j.get("active") is False:
+            raise Gone("inactive")
+        secs = j.get("jobAd", {}).get("sections", {})
         return strip_html(" ".join((secs.get(k) or {}).get("text", "") for k in ["jobDescription", "qualifications"]))
     if kind == "oracle":
         items = jget(url).get("items", [])
-        return strip_html(items[0].get("ExternalDescriptionStr", "") + " " + items[0].get("ExternalQualificationsStr", "")) if items else ""
+        if not items:
+            raise Gone("no record")
+        return strip_html(items[0].get("ExternalDescriptionStr", "") + " " + items[0].get("ExternalQualificationsStr", ""))
     if kind == "eightfold":
-        return strip_html((jget(url).get("data") or {}).get("jobDescription", ""))
+        data = jget(url).get("data")
+        if not data:
+            raise Gone("no record")
+        return strip_html(data.get("jobDescription", ""))
     if kind == "greenhouse":
         return strip_html(jget(url).get("content", ""))
     if kind == "lever":
-        j = jget(url)
-        lists = " ".join(f"{x.get('text', '')}\n{strip_html(x.get('content', ''))}" for x in j.get("lists") or [])
-        return strip_html(f"{j.get('descriptionPlain', '')}\n{lists}\n{j.get('additionalPlain', '')}")
+        return _lever_text(jget(url))
     if kind == "ashby":  # the public API only lists a whole board, so fetch each board once per run
         org, job_id = url, d[2]
         with _ashby_lock:
             if org not in _ashby_boards:
                 _ashby_boards[org] = {j.get("id"): j for j in jget(f"https://api.ashbyhq.com/posting-api/job-board/{org}").get("jobs", [])}
-        return (_ashby_boards[org].get(job_id) or {}).get("descriptionPlain", "")
+        if job_id not in _ashby_boards[org]:
+            raise Gone("not on the board")
+        return _ashby_boards[org][job_id].get("descriptionPlain", "")
     if kind == "html":
         return _html_description(url)
     return ""
@@ -418,53 +454,184 @@ def detail_from_url(u):
     return ["html", u]
 
 
-def fill_descriptions(listings, cap, budget_s):
-    """Fetches missing descriptions: one worker per host (so each site sees one request at a time, with a pause),
-    up to 8 hosts in parallel, stopping at `cap` fetches or `budget_s` seconds. Returns per-source counts."""
-    todo = {}
-    for l in listings:
-        d = l.get("detail") or detail_from_url(l.get("url"))
-        if d:
-            host = urlparse(d[1]).netloc if d[0] != "ashby" else "api.ashbyhq.com"
-            todo.setdefault(host, []).append((l, d))
-    deadline, lock = time.time() + budget_s, threading.Lock()
-    left = [cap]
-    stats = {"filled": Counter(), "empty": Counter(), "failed": Counter(), "unsupported": Counter(), "blocked": Counter(), "skipped": 0}
-    for l in listings:
-        if not (l.get("detail") or detail_from_url(l.get("url"))):
-            stats["unsupported"][l["sources"][0]] += 1
+FILL, CONFIRM, RECHECK = 0, 1, 2  # task priorities: never read in full, missing from tonight's search, routine re-read
 
-    def work(items):
-        streak = 0  # consecutive failures on this host; a site that blocks scripts (e.g. tesla.com) is dropped after 3
-        for n, (l, d) in enumerate(items):
+
+def fetch_details(tasks, fill_cap, per_host, budget_s):
+    """Reads job pages: one worker per host (each site sees one request at a time, with a pause), up to 8 hosts in
+    parallel. tasks: (priority, sort key, listing, detail). New postings (FILL) share a global cap; re-reads are capped
+    per host so no site gets more than `per_host` extra requests a night. A host is dropped for the night on a 429 or
+    after 3 failures in a row. Sets l["_full"]/l["_kind"] on success or l["_gone"] when the site says it's gone.
+    Returns per-host counts."""
+    todo = {}
+    for t in sorted(tasks, key=lambda t: t[:2]):
+        d = t[3]
+        todo.setdefault(urlparse(d[1]).netloc if d[0] != "ashby" else "api.ashbyhq.com", []).append(t)
+    deadline, lock, left = time.time() + budget_s, threading.Lock(), [fill_cap]
+    stats = {}
+
+    def work(host, items):
+        st = stats[host] = Counter()
+        streak, rechecks = 0, 0
+        for n, (prio, _, l, d) in enumerate(items):
             if streak >= 3:
-                with lock:
-                    stats["blocked"][urlparse(d[1]).netloc or d[0]] += len(items) - n
+                st["blocked"] += len(items) - n
                 return
             with lock:
-                if left[0] <= 0 or time.time() > deadline:
-                    stats["skipped"] += 1
+                if time.time() > deadline or (prio == FILL and left[0] <= 0) or (prio != FILL and rechecks >= per_host):
+                    st["skipped"] += 1
                     continue
-                left[0] -= 1
-            src = l["sources"][0]
+                if prio == FILL:
+                    left[0] -= 1
+                else:
+                    rechecks += 1
             try:
                 txt = fetch_detail(d).strip()
                 streak = 0
-                with lock:
-                    if len(txt) >= 80:
-                        l["desc"] = txt[:4000]
-                        stats["filled"][src] += 1
-                    else:
-                        stats["empty"][src] += 1
-            except Exception:
+                if len(txt) >= 80:
+                    l["_full"], l["_kind"] = txt, d[0]
+                    st["read"] += 1
+                else:
+                    st["empty"] += 1
+            except Gone as e:
+                streak = 0
+                l["_gone"] = str(e)
+                st["gone"] += 1
+            except HTTPError as e:
+                st["failed"] += 1
+                if e.code == 429:  # rate limited: leave this site alone until tomorrow
+                    st["blocked"] += len(items) - n - 1
+                    return
                 streak += 1
-                with lock:
-                    stats["failed"][src] += 1
-            time.sleep(0.25)
+            except Exception:
+                st["failed"] += 1
+                streak += 1
+            time.sleep(0.3)
 
     with ThreadPoolExecutor(max_workers=8) as pool:
-        list(pool.map(work, todo.values()))
+        list(pool.map(lambda kv: work(*kv), todo.items()))
     return stats
+
+
+# ---------- reading a full description: change hash, stated deadline, pay ----------
+
+# Text that changes on its own ("Posted 3 days ago") is left out of the hash, as are whitespace and punctuation
+DYNAMIC = re.compile(r"\b(date posted|posted|updated)\s*:?\s*(on\s+)?(today|yesterday|\d+\+?\s+\w+\s+ago|[a-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}|"
+                     r"\d{1,2}/\d{1,2}/\d{2,4}|\d{4}-\d\d-\d\d)|\b\d+\+?\s+(days?|hours?|weeks?|months?)\s+ago\b|\b\d+\+?\s+applicants\b", re.I)
+
+
+def text_hash(t):
+    return hashlib.sha1(re.sub(r"[^a-z0-9$%]+", "", DYNAMIC.sub(" ", t.lower())).encode()).hexdigest()[:12]
+
+
+_MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
+DATE_RE = re.compile(rf"\b{_MON}\s+(\d{{1,2}})(?:st|nd|rd|th)?(?:,?\s+(20\d\d))?\b"
+                     rf"|\b(\d{{1,2}})(?:st|nd|rd|th)?\s+(?:of\s+)?{_MON}(?:,?\s+(20\d\d))?\b"
+                     r"|\b(\d{1,2})/(\d{1,2})/((?:20)?\d\d)\b|\b(20\d\d)-(\d\d)-(\d\d)\b", re.I)
+# Only wording about applying counts; "meet deadlines", start dates and graduation dates never match
+DEADLINE_CUE = re.compile(
+    r"\b(application deadline|deadline (to|for) (apply|applications?|submit\w*)|deadline\s*[:\-–]|apply (by|before|no later than)|"
+    r"applications? (are |will be )?(accepted|due|reviewed|received|considered|open) (until|through|thru|by|before|no later than)|"
+    r"(applications?|posting|window) (will )?(close|closes|closing|end|ends|expires?)( on)?|"
+    r"(position|job|requisition|role) (posting )?(will )?(close|closes|closing|expires?)( on)?|"
+    r"(posted|open|accepting applications) (until|through|thru)|closing date|posting end date|last day to apply)(?![a-z])", re.I)
+PAY_RE = re.compile(r"\$\s?\d[\d,]*(?:\.\d{1,2})?\s*[kK]?\s*(?:-|–|—|to)\s*\$?\s?\d[\d,]*(?:\.\d{1,2})?\s*[kK]?"
+                    r"(?:\s*(?:/|per|an|a)\s*(?:hour|hr|year|yr|annum|month|week)\b)?"
+                    r"|\$\s?\d[\d,]*(?:\.\d{1,2})?\s*(?:/|per|an|a)\s*(?:hour|hr)\b", re.I)
+MONTHS = {m: i + 1 for i, m in enumerate("jan feb mar apr may jun jul aug sep oct nov dec".split())}
+
+
+def _date_of(m, first_seen):
+    g = m.groups()
+    try:
+        if g[0]:
+            mon, day, year = MONTHS[g[0][:3].lower()], int(g[1]), g[2]
+        elif g[3]:
+            day, mon, year = int(g[3]), MONTHS[g[4][:3].lower()], g[5]
+        elif g[6]:
+            a, b, year = int(g[6]), int(g[7]), g[8]
+            mon, day = (b, a) if a > 12 else (a, b)  # US sites write month first
+            year = year if len(year) == 4 else "20" + year
+        else:
+            year, mon, day = g[9], int(g[10]), int(g[11])
+        if year:
+            return dt.date(int(year), mon, day)
+        d = dt.date(first_seen.year, mon, day)  # no year: the next such date after the posting appeared
+        return d if d >= first_seen - dt.timedelta(days=30) else dt.date(first_seen.year + 1, mon, day)
+    except (ValueError, KeyError):
+        return None
+
+
+def find_deadline(text, first_seen):
+    """(date, sentence) for an application deadline the posting states, or None. The date must sit right after the
+    cue in the same sentence, and fall between a month before the posting appeared and about a year out."""
+    fs = dt.date.fromisoformat(first_seen)
+    for m in DEADLINE_CUE.finditer(text):
+        seg = text[m.end():m.end() + 70]
+        dm = DATE_RE.search(seg)
+        if not dm or dm.start() > 45 or re.search(r"[.!?]\s|\n", seg[:dm.start()]):
+            continue
+        d = _date_of(dm, fs)
+        if not d or not (fs - dt.timedelta(days=45) <= d <= NOW.date() + dt.timedelta(days=400)):
+            continue
+        dot = text.rfind(". ", 0, m.start())
+        a = max(dot + 2 if dot >= 0 else 0, text.rfind("\n", 0, m.start()) + 1, m.start() - 160)
+        tail = re.search(r"[.!?](\s|$)|\n", text[m.end() + dm.end():])
+        b = m.end() + dm.end() + (tail.end() if tail else 0)
+        return d.isoformat(), " ".join(text[a:min(b, a + 260)].split())
+    return None
+
+
+def find_pay(text):
+    for m in PAY_RE.finditer(text):
+        if not re.match(r"\s*(million|billion|[mb]n?\b)", text[m.end():m.end() + 10], re.I) and re.search(r"[1-9]", m.group(0)):
+            return " ".join(m.group(0).split())[:60]
+    return None
+
+
+TEXT_FIELDS = ("desc_hash", "hash_kind", "checked_on", "desc_changed_on", "deadline", "deadline_quote", "pay", "page_gone")
+
+
+def apply_text(l, old):
+    """Tonight's full text (inline from the board or read from the job page) updates the stored description, its hash,
+    the stated deadline and pay. Without it, last night's values carry over. A different hash from the same kind of
+    source is a real edit (desc_changed_on); a new source kind just resets the baseline."""
+    text, kind, gone = l.pop("_full", ""), l.pop("_kind", None), l.pop("_gone", None)
+    for k in TEXT_FIELDS:
+        if old.get(k) and not l.get(k):
+            l[k] = old[k]
+    if gone:
+        l["page_gone"] = old.get("page_gone") or TODAY
+        if old.get("desc") and len(old["desc"]) > len(l.get("desc") or ""):
+            l["desc"] = old["desc"]
+        return
+    if len(text) < 80:
+        if old.get("desc") and (old.get("desc_hash") or not l.get("desc")):
+            l["desc"] = old["desc"]  # keep the full text over a short teaser from the search results
+        return
+    h = text_hash(text)
+    if old.get("desc_hash") and old.get("hash_kind") == kind and old["desc_hash"] != h:
+        l["desc_changed_on"] = TODAY
+    l.update(desc=text[:DESC_CAP], desc_hash=h, hash_kind=kind, checked_on=TODAY)
+    l.pop("page_gone", None)
+    for k, v in zip(("deadline", "deadline_quote"), find_deadline(text, l.get("first_seen") or TODAY) or (None, None)):
+        l[k] = v
+    l["pay"] = find_pay(text)
+    for k in ("deadline", "deadline_quote", "pay"):
+        if not l[k]:
+            del l[k]
+
+
+def job_key(l):
+    """Company + site + job number from the link, so a posting whose title or location was edited (a new listing id)
+    is recognized as the same job."""
+    p = urlparse(l.get("url") or "")
+    if not p.netloc:
+        return None
+    segs = [x for x in p.path.split("/") if x]
+    ids = re.findall(r"\d{5,}", segs[-1]) if segs else []
+    ids = ids or [v for vs in parse_qs(p.query).values() for v in vs if re.fullmatch(r"\d{5,}", v)]
+    return (norm(l.get("company", "")), p.netloc.lower(), ids[-1] if ids else (p.path.lower().rstrip("/") + "?" + p.query))
 
 
 # ---------- repo adapters ----------
@@ -567,13 +734,14 @@ def accept(row, comp_entry, from_repo):
     elif comp_entry.get("sales_only"):  # on your list for sales/FAE only (non-semiconductor companies)
         if lane != "sales" or NOT_ECE.search(title) or NONTECH_SALES.search(title):
             return None
-    if grad_only(title, row.get("desc", ""), row.get("degrees", [])) or needs_clearance(row.get("desc", "")):
+    if grad_only(title, "", row.get("degrees", [])):  # the description is checked after merging (see main)
         return None
     coop = bool(re.search(r"\bco-?op\b", title, re.I))
     return {"company": company, "title": title, "location": row.get("location", ""), "url": row.get("url", ""),
-            "term": term, "coop": coop, "lane": lane, "desc": (row.get("desc") or "")[:4000],
+            "term": term, "coop": coop, "lane": lane, "desc": (row.get("desc") or "")[:DESC_CAP],
             "tier": comp_entry["tier"] if comp_entry else "", "segment": comp_entry["segment"] if comp_entry else "",
-            "known": bool(comp_entry), "detail": row.get("detail"), "degrees": row.get("degrees", [])}
+            "known": bool(comp_entry), "detail": row.get("detail"), "degrees": row.get("degrees", []),
+            "_full": (row.get("desc") or "") if row.get("full") else "", "_kind": row.get("kind")}
 
 
 def score(l):
@@ -604,7 +772,7 @@ def main():
         if cur:
             cur["sources"] = sorted(set(cur["sources"]) | {src_name})
             if not from_repo and cur.get("from_repo"):  # prefer the official site's link + text
-                cur.update({k: l[k] for k in ("url", "detail") if l.get(k)})
+                cur.update({k: l[k] for k in ("url", "detail", "_full", "_kind") if l.get(k)})
                 cur["desc"] = l["desc"] or cur["desc"]
                 cur["from_repo"] = False
             if row.get("active") is False:
@@ -638,6 +806,7 @@ def main():
                 status.append({"name": name, "company": c["name"], "ok": False, "error": err})
                 continue
             for r in rows:
+                r.setdefault("kind", s["type"])
                 add(r, c, name, False)
             status.append({"name": name, "company": c["name"], "ok": True, "rows": len(rows), "secs": secs})
 
@@ -654,40 +823,73 @@ def main():
                 failed_sources.add(src["name"])
                 status.append({"name": src["name"], "company": "", "ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"})
 
-    # descriptions: reuse last night's, fetch only what is new or still missing (capped, time-boxed, polite)
+    # same job, new id: a title or location edit changes the id, so match tonight's new ids to last night's
+    # vanished ones by job link and carry the history over (the old id goes in prev_ids for the dashboard)
+    vanished = {}
+    for lid, old in prev.items():
+        k = lid not in current and job_key(old)
+        if k:
+            vanished[k] = None if k in vanished else lid  # two candidates: ambiguous, carry neither
+    carried = {}
     for lid, l in current.items():
-        old = prev.get(lid)
-        if old and old.get("desc") and not l["desc"]:
-            l["desc"] = old["desc"]
-    missing = [l for l in current.values() if not l["desc"] and not l.get("inactive")]
+        old_id = lid not in prev and vanished.pop(job_key(l), None)  # pop: one old listing carries to one new id
+        if old_id:
+            carried[lid] = prev[old_id]
+    carried_old = {o["id"] for o in carried.values()}
+    history = lambda lid: prev.get(lid) or carried.get(lid) or {}
+
+    # job pages: read new postings in full, confirm ones missing from tonight's search, and re-read the rest
+    # (oldest read first, sales and P1 first) so edits, deadlines and closings show up. Boards that list full
+    # descriptions (Greenhouse, Lever, Ashby, Jibe) were read in full by the search itself.
+    rank = lambda l: -({"sales": 30, "swe": 20, "hw": 10}.get(l["lane"], 0) + {"P1": 3, "P2": 2, "P3": 1}.get(l.get("tier"), 0))
+    tasks = []
+    for lid, l in current.items():
+        if l.get("inactive") or len(l["_full"]) >= 80:
+            continue
+        d = l.get("detail") or detail_from_url(l.get("url"))
+        old = history(lid)
+        if d:
+            tasks.append((FILL, rank(l), l, d) if not old.get("desc_hash") else (RECHECK, (old.get("checked_on") or "", rank(l)), l, d))
+    for lid, old in prev.items():
+        if lid in current or lid in carried_old or old["status"] != "open" or (only and norm(old["company"]) not in only) \
+                or any(s in failed_sources for s in old.get("sources", [])):
+            continue
+        d = detail_from_url(old.get("url"))
+        if d:
+            tasks.append((CONFIRM, rank(old), old, d))
     t0 = time.time()
-    st = fill_descriptions(missing, CFG.get("detail_fetch_cap", 600), CFG.get("detail_time_budget_s", 240))
-    top = lambda c: ", ".join(f"{k} {v}" for k, v in c.most_common(8)) or "none"
-    print(f"descriptions: {sum(st['filled'].values())} filled of {len(missing)} missing in {time.time() - t0:.0f}s; "
-          f"{sum(st['empty'].values())} had none, {sum(st['failed'].values())} failed, {st['skipped']} left for next run, "
-          f"{sum(st['unsupported'].values())} with no readable link", flush=True)
-    print(f"  filled by source: {top(st['filled'])}", flush=True)
-    if st["failed"]:
-        print(f"  failed by source: {top(st['failed'])}", flush=True)
-    if st["blocked"]:
-        print(f"  sites skipped after 3 failures in a row: {top(st['blocked'])}", flush=True)
+    st = fetch_details(tasks, CFG.get("detail_fetch_cap", 600), CFG.get("recheck_per_host", 40), CFG.get("detail_time_budget_s", 480))
+    tot = sum(st.values(), Counter())
+    print(f"job pages: {len(tasks)} queued, {tot['read']} read, {tot['gone']} gone, {tot['empty']} empty, {tot['failed']} failed, "
+          f"{tot['blocked']} blocked, {tot['skipped']} left for next run ({time.time() - t0:.0f}s)", flush=True)
+    for host, c in sorted(st.items(), key=lambda kv: -(kv[1]["failed"] + kv[1]["blocked"])):
+        if c["failed"] or c["blocked"]:
+            print(f"  {host}: {dict(c)}", flush=True)
 
     # merge with history
     listings = []
     for lid, l in current.items():
-        if l.get("inactive") and lid not in prev:
+        if l.get("inactive") and lid not in prev and lid not in carried:
             continue  # closed before we ever saw it
-        old = prev.get(lid, {})
+        old = history(lid)
         l["first_seen"] = old.get("first_seen", TODAY)
         l["last_seen"] = TODAY
         l["missed"] = 0
         l["status"] = "closed" if l.pop("inactive", False) else "open"
         if l["status"] == "closed":
             l["closed_on"] = old.get("closed_on", TODAY)
+        if lid in carried:
+            l["prev_ids"] = (old.get("prev_ids") or [])[-4:] + [old["id"]]
+            if (old["title"], old["location"]) != (l["title"], l["location"]):
+                l["was"] = {"title": old["title"], "location": old["location"], "on": TODAY}
+        for k in ("prev_ids", "was"):
+            if old.get(k) and not l.get(k):
+                l[k] = old[k]
+        apply_text(l, old)
         listings.append(l)
     configured = {feed_name(c, s) for c in COMPANIES for s in c.get("sources", [])} | {r["name"] for r in CFG["repos"]}
     for lid, old in prev.items():
-        if lid in current:
+        if lid in current or lid in carried_old:
             continue
         if old.get("sources") and not any(s in configured for s in old["sources"]):
             continue  # every source behind it was removed from config (e.g. a feed that was the wrong company)
@@ -697,18 +899,34 @@ def main():
         if any(s in failed_sources for s in old.get("sources", [])):
             listings.append(old)  # its source broke tonight: don't call it closed
             continue
+        gone = old.get("_gone")
+        apply_text(old, dict(old))
         old["missed"] = old.get("missed", 0) + 1
-        if old["missed"] >= CFG.get("close_after_missed_runs", 2) and old["status"] == "open":
-            old["status"], old["closed_on"] = "closed", TODAY
+        if old["status"] == "open" and (old["missed"] >= CFG.get("close_after_missed_runs", 2) or gone):
+            old["status"], old["closed_on"] = "closed", TODAY  # missing from search and its page is gone: closed now
         if old["status"] == "closed" and old.get("closed_on", TODAY) < (NOW.date() - dt.timedelta(days=30)).isoformat():
             continue
         listings.append(old)
 
-    listings = [l for l in listings if (l.get("known") or (l["lane"] == "sales" and ECE_SALES.search(l["title"])))
-                and not grad_only(l["title"], l.get("desc", ""), l.get("degrees", []))
-                and not needs_clearance(l.get("desc", ""))]
+    # Off-list companies keep only technical sales roles. Grad-only and clearance postings are dropped, except ones
+    # already shown before: those stay, marked "excluded", so a saved role whose posting changed says why.
+    kept = []
     for l in listings:
-        l.pop("detail", None)
+        if not (l.get("known") or (l["lane"] == "sales" and ECE_SALES.search(l["title"]))):
+            continue
+        why = ("Grad students only" if grad_only(l["title"], l.get("desc", ""), l.get("degrees", []))
+               else "Needs a security clearance" if needs_clearance(l.get("desc", "")) else None)
+        if why and l["id"] not in prev and not l.get("prev_ids"):
+            continue
+        if why:
+            l["excluded"] = why
+        else:
+            l.pop("excluded", None)
+        kept.append(l)
+    listings = kept
+    for l in listings:
+        for k in ("detail", "_full", "_kind", "_gone"):
+            l.pop(k, None)
         l["bay"] = bool(BAY.search(l.get("location", "")))
         l["flags"], l["tags"] = eligibility(l["title"], l.get("desc", ""))
         if "Master's" in l.get("degrees", []) or re.search(r"\b(ms|m\.s\.|master'?s)\b", l["title"], re.I):
@@ -718,10 +936,18 @@ def main():
 
     (ROOT / "data").mkdir(exist_ok=True)
     out_path.write_text(json.dumps({"generated_at": NOW.isoformat(timespec="seconds"),
-                                    "count": sum(l["status"] == "open" for l in listings),
+                                    "count": sum(l["status"] == "open" and not l.get("excluded") for l in listings),
                                     "listings": listings}, separators=(",", ":")))
+    # job-page health, so a site that starts blocking (and its postings going stale) is visible on the dashboard
+    open_ = [l for l in listings if l["status"] == "open"]
+    stale_by = Counter(urlparse(l["url"]).netloc for l in open_
+                       if (l.get("checked_on") or "") < (NOW.date() - dt.timedelta(days=3)).isoformat())
+    pages = {**{k: tot[k] for k in ("read", "gone", "empty", "failed", "blocked", "skipped")}, "queued": len(tasks),
+             "changed": sum(l.get("desc_changed_on") == TODAY for l in open_), "unread_3d": sum(stale_by.values()),
+             "unread_3d_by_site": dict(stale_by.most_common(12)),
+             "problems": {h: {k: c[k] for k in ("failed", "blocked") if c[k]} for h, c in st.items() if c["failed"] or c["blocked"]}}
     (ROOT / "data/sources.json").write_text(json.dumps({"generated_at": NOW.isoformat(timespec="seconds"),
-                                                       "sources": status}, indent=1))
+                                                       "sources": status, "pages": pages}, indent=1))
     ok = sum(s["ok"] for s in status)
     print(f"{len(listings)} listings ({sum(l['status'] == 'open' for l in listings)} open); sources ok {ok}/{len(status)}")
 
