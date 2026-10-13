@@ -508,8 +508,8 @@ function setStatus(id, s){
 
 /* ---------- feed ---------- */
 function feedList(){
-  const f = ui.feed, q = norm(f.q);
-  return L.listings.filter(l => l.status === "open" && !S.hidden[l.id] && f.lanes.has(l.lane)
+  const f = ui.feed, q = norm(f.q), saved = new Set(Object.values(S.items).map(i => i.lid));  // saved roles live in Apply later
+  return L.listings.filter(l => l.status === "open" && !S.hidden[l.id] && !saved.has(l.id) && f.lanes.has(l.lane)
     && (!f.bay || l.bay) && (!f.tier || l.tier === "P1" || l.tier === "P2") && (!f.clean || !l.flags.length)
     && (!f.fresh || (prevVisit ? l.first_seen > prevVisit : l.first_seen === today()))
     && (f.coop === "all" || (f.coop === "summer" ? l.term === "Summer 2027" : (l.coop || /Spring|Fall|Winter/.test(l.term))))
