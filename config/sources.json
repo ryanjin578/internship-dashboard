@@ -14,5 +14,8 @@
  "detail_fetch_cap": 600,
  "detail_time_budget_s": 480,
  "recheck_per_host": 40,
- "close_after_missed_runs": 2
+ "close_after_missed_runs": 2,
+ "unreadable_hosts": {
+  "www.tesla.com": "Akamai bot wall: 403 or a JavaScript challenge for anything but a real browser (tested 2026-10-15)"
+ }
 }

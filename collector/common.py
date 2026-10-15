@@ -1,6 +1,7 @@
 """Shared helpers: HTTP, text cleanup, company matching, classification."""
-import html, json, re
+import html, json, re, ssl, time
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -8,15 +9,31 @@ UA = {"User-Agent": "Mozilla/5.0 (personal internship dashboard)",
       "Accept": "application/json, text/plain, */*"}
 
 
-def http(url, data=None, headers=None, timeout=25):
+RETRY_CODES = {429, 500, 502, 503, 504, 520, 521, 522, 523, 524}  # rate limits, gateway and Cloudflare hiccups
+
+
+def http(url, data=None, headers=None, timeout=25, retries=2):
+    """GET (or POST JSON). Rate limits, 5xx and dropped connections are retried after 3s, then 10s (or the site's
+    Retry-After, up to 60s); `retries=0` fails fast."""
     h = dict(UA)
     h.update(headers or {})
     body = None
     if data is not None:
         body = json.dumps(data).encode()
         h["Content-Type"] = "application/json"
-    with urlopen(Request(url, data=body, headers=h), timeout=timeout) as r:
-        return r.read().decode("utf-8", "replace")
+    for n in range(retries + 1):
+        try:
+            with urlopen(Request(url, data=body, headers=h), timeout=timeout) as r:
+                return r.read().decode("utf-8", "replace")
+        except HTTPError as e:
+            if e.code not in RETRY_CODES or n == retries:
+                raise
+            wait = e.headers.get("Retry-After", "")
+            time.sleep(min(int(wait), 60) if wait.isdigit() else (3, 10)[min(n, 1)])
+        except (URLError, ConnectionError, TimeoutError) as e:
+            if n == retries or isinstance(getattr(e, "reason", None), ssl.SSLError):
+                raise
+            time.sleep((3, 10)[min(n, 1)])
 
 
 def jget(url, **kw):
@@ -93,13 +110,16 @@ FOREIGN = re.compile(r"\b(canada|india|china|taiwan|japan|korea|germany|france|u
                      r"czech|bangalore|bengaluru|hyderabad|shanghai|beijing|toronto|ontario|quebec|munich|penang|hsinchu|"
                      r"tokyo|seoul|paris|london|amsterdam|gdansk|kaohsiung|noida|norway|sweden|denmark|finland|belgium|scotland|"
                      r"hungary|romania|portugal|greece|turkey|thailand|indonesia|new zealand|chile|argentina|costa rica|"
-                     r"armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest|saudi arabia|riyadh|qatar|egypt|south africa)\b", re.I)
+                     r"hong kong|macau|armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest|saudi arabia|riyadh|qatar|egypt|south africa)\b", re.I)
 
 
 def is_us(loc):
     """Unknown or ambiguous locations are kept; clearly foreign ones are dropped."""
     if not loc:
         return True
+    iso3 = re.match(r"([A-Z]{3})\s+-\s", loc)  # Workday sites that lead with a country code: "SGP - Woodlands"
+    if iso3:
+        return iso3.group(1) == "USA"
     for m in re.finditer(r"(?:,|-)\s*([A-Z]{2})\b", loc):
         if m.group(1) in STATES:
             return True

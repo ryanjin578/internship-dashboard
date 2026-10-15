@@ -27,6 +27,7 @@ TODAY = NOW.date().isoformat()
 COMPANIES = json.loads((ROOT / "config/companies.json").read_text())
 CFG = json.loads((ROOT / "config/sources.json").read_text())
 IDX = CompanyIndex(COMPANIES)
+UNREADABLE = CFG.get("unreadable_hosts", {})  # job pages no script can read; open/closed comes from the feeds and repos
 QUERIES = ["intern", "co-op"]
 DESC_CAP = 8000  # stored text; hashes, deadlines and pay are read from the full text
 
@@ -312,9 +313,11 @@ def a_avature(s):
                 new += 1
                 if keep and not keep.search(title):
                     continue
-                after = h[h.find(href):][:1500]
-                loc = re.search(r'class="[^"]*location[^"]*"[^>]*>(.*?)</', after, re.S)
-                rows.append({"title": title, "location": strip_html(loc.group(1)) if loc else "", "url": url})
+                after = h[h.find(href):][:3000]
+                # first thing in the subtitle: city/state/country spans then "• Job ID" (Siemens), or "...<br> Req #" (Lenovo)
+                loc = re.search(r'class="[^"]*(?:location|subtitle)[^"]*"[^>]*>(.*?)(?:&#8226;|•|<br|Job ID|Req #|</div>)', after, re.S)
+                loc = re.sub(r"\s+,", ",", " ".join(strip_html(loc.group(1)).split())).strip(" ,") if loc else ""
+                rows.append({"title": title, "location": loc, "url": url})
             if not new:
                 break
             time.sleep(0.3)
@@ -331,8 +334,8 @@ _ashby_boards, _ashby_lock = {}, threading.Lock()
 
 
 def _html_description(url):
-    """Description from a job page: schema.org JobPosting JSON-LD first, then an itemprop="description" block
-    (SuccessFactors, TalentBrew, iCIMS, Jobvite and many custom sites). Returns "" when neither is present."""
+    """Description from a job page: schema.org JobPosting JSON-LD first, then the TEXT_BLOCKS layouts
+    (SuccessFactors, TalentBrew, iCIMS, Jobvite, Avature and many custom sites). Returns "" when none is present."""
     h = http(url, headers={"Accept": "text/html"})
     for block in re.findall(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', h, re.S | re.I):
         try:
@@ -342,19 +345,30 @@ def _html_description(url):
         for d in (data if isinstance(data, list) else data.get("@graph", [data]) if isinstance(data, dict) else []):
             if isinstance(d, dict) and d.get("@type") == "JobPosting" and d.get("description"):
                 return strip_html(d["description"])
-    parts = []  # SuccessFactors splits the text over several itemprop="description" blocks (intro, duties, ...)
-    for m in re.finditer(r'<(?!meta)[a-z]+[^>]*itemprop="description"[^>]*>', h):
-        body = h[m.end():m.end() + 40000]
-        end = re.search(r'joblayouttoken-label|itemprop="description"|class="applylink|</article>|<footer', body)
-        if end:  # cut before the tag that holds the marker, so no half tag is left
-            body = body[:max(0, body.rfind("<", 0, end.start()))]
-        txt = strip_html(body)
-        if txt and txt not in parts:
-            parts.append(txt)
+    parts = []
+    for start, stop in TEXT_BLOCKS:
+        for m in re.finditer(start, h):
+            body = h[m.end():m.end() + 40000]
+            end = re.search(stop, body)
+            if end:  # cut before the tag that holds the marker, so no half tag is left
+                body = body[:max(0, body.rfind("<", 0, end.start()))]
+            txt = strip_html(body)
+            if txt and txt not in parts:
+                parts.append(txt)
+        if parts:
+            break
     if not parts and CLOSED_PAGE.search(strip_html(h)[:20000]):
         raise Gone("page says the job is closed")
     return "\n".join(parts)
 
+
+# Where a page without JSON-LD keeps its text: (block start, where the block ends), first layout that matches wins.
+# SuccessFactors splits it over several itemprop="description" blocks (intro, duties, ...); its newer "unify" pages
+# (seagatecareers.com) have one joblayouttoken block per field, and Avature (jobs.lenovo.com, jobs.siemens.com) one
+# article__content__view__field block per field.
+TEXT_BLOCKS = [(r'<(?!meta)[a-z]+[^>]*itemprop="description"[^>]*>', r'joblayouttoken-label|itemprop="description"|class="applylink|</article>|<footer'),
+               (r'<div class="joblayouttoken[ "][^>]*>', r'class="joblayouttoken[ "]|class="jobColumnTwo"|<footer'),
+               (r'<div class="article__content__view__field[ "][^>]*>', r'class="article__content__view__field[ "]|</article>|<footer')]
 
 # Only checked on pages with no description, so a posting that mentions these words isn't mistaken for a closed one
 CLOSED_PAGE = re.compile(r"no longer (available|accepting|open|active|posted)|position has been filled|"
@@ -369,6 +383,8 @@ def fetch_detail(d):
     except HTTPError as e:
         if e.code in (404, 410):  # Workday, Greenhouse and Lever answer 404 for a removed posting
             raise Gone(f"HTTP {e.code}")
+        if e.code == 403 and d[0] == "workday" and b'"S22"' in e.read():  # Workday's "permission denied" for an unposted job
+            raise Gone("HTTP 403 S22")
         raise
 
 
@@ -413,7 +429,7 @@ def detail_from_url(u):
     """Maps an apply link (mostly from the GitHub repos) to the ATS endpoint that has its description."""
     p = urlparse(u or "")
     host, parts = p.netloc.lower(), [x for x in p.path.split("/") if x]
-    if p.scheme not in ("http", "https") or not host:
+    if p.scheme not in ("http", "https") or not host or host in UNREADABLE:
         return None
     q = parse_qs(p.query)
     if re.match(r"[a-z]{2}-[A-Z]{2}$", parts[0] if parts else ""):
@@ -799,16 +815,23 @@ def main():
             return job, [], f"{type(e).__name__}: {str(e)[:160]}", round(time.time() - t0, 1)
 
     with ThreadPoolExecutor(max_workers=8) as pool:
-        for (c, s, name), rows, err, secs in pool.map(run, jobs):
-            print(f"{'ok ' if not err else 'ERR'} {secs:>5}s {len(rows):>4} rows  {name}" + (f"  {err}" if err else ""), flush=True)
-            if err:
-                failed_sources.add(name)
-                status.append({"name": name, "company": c["name"], "ok": False, "error": err})
-                continue
-            for r in rows:
-                r.setdefault("kind", s["type"])
-                add(r, c, name, False)
-            status.append({"name": name, "company": c["name"], "ok": True, "rows": len(rows), "secs": secs})
+        results = list(pool.map(run, jobs))
+    retry = [r[0] for r in results if r[2]]
+    if retry:  # a site that rate-limited or dropped us mid-run usually answers a minute later, one feed at a time
+        print(f"retrying {len(retry)} failed feeds in 60s", flush=True)
+        time.sleep(60)
+        again = {r[0][2]: r for r in map(run, retry)}
+        results = [again.get(r[0][2], r) for r in results]
+    for (c, s, name), rows, err, secs in results:
+        print(f"{'ok ' if not err else 'ERR'} {secs:>5}s {len(rows):>4} rows  {name}" + (f"  {err}" if err else ""), flush=True)
+        if err:
+            failed_sources.add(name)
+            status.append({"name": name, "company": c["name"], "ok": False, "error": err})
+            continue
+        for r in rows:
+            r.setdefault("kind", s["type"])
+            add(r, c, name, False)
+        status.append({"name": name, "company": c["name"], "ok": True, "rows": len(rows), "secs": secs})
 
     # repos
     if not only:
@@ -893,6 +916,8 @@ def main():
             continue
         if old.get("sources") and not any(s in configured for s in old["sources"]):
             continue  # every source behind it was removed from config (e.g. a feed that was the wrong company)
+        if not is_us(old.get("location", "")):
+            continue  # outside the US by tonight's location rules (e.g. "SGP - Woodlands" from before they caught it)
         if only and norm(old["company"]) not in only:
             listings.append(old)
             continue
@@ -940,11 +965,13 @@ def main():
                                     "listings": listings}, separators=(",", ":")))
     # job-page health, so a site that starts blocking (and its postings going stale) is visible on the dashboard
     open_ = [l for l in listings if l["status"] == "open"]
-    stale_by = Counter(urlparse(l["url"]).netloc for l in open_
+    unreadable = Counter(h for l in open_ if (h := urlparse(l["url"]).netloc) in UNREADABLE)
+    stale_by = Counter(h for l in open_ if (h := urlparse(l["url"]).netloc) not in UNREADABLE
                        if (l.get("checked_on") or "") < (NOW.date() - dt.timedelta(days=3)).isoformat())
     pages = {**{k: tot[k] for k in ("read", "gone", "empty", "failed", "blocked", "skipped")}, "queued": len(tasks),
              "changed": sum(l.get("desc_changed_on") == TODAY for l in open_), "unread_3d": sum(stale_by.values()),
              "unread_3d_by_site": dict(stale_by.most_common(12)),
+             "unreadable": {h: {"open": n, "why": UNREADABLE[h]} for h, n in unreadable.items()},
              "problems": {h: {k: c[k] for k in ("failed", "blocked") if c[k]} for h, c in st.items() if c["failed"] or c["blocked"]}}
     (ROOT / "data/sources.json").write_text(json.dumps({"generated_at": NOW.isoformat(timespec="seconds"),
                                                        "sources": status, "pages": pages}, indent=1))

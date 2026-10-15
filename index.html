@@ -1277,7 +1277,9 @@ function pagesHealth(){
   return `<h3>Job pages</h3><p class="note">Last run read ${esc(p.read)} postings in full, found ${esc(p.changed)} edited and ${esc(p.gone)} gone; ${esc(p.failed)} failed, ${esc(p.blocked)} skipped after a site blocked us, ${esc(p.skipped)} left for the next run.
     ${esc(p.unread_3d)} open postings weren't read in the last 3 days (blocked sites, or not reached yet).</p>
    ${Object.keys(p.problems || {}).length ? `<p class="sub"><strong>Sites with errors</strong></p>${list(p.problems)}` : ""}
-   ${Object.keys(p.unread_3d_by_site || {}).length ? `<p class="sub"><strong>Not read in the last 3 days, by site</strong></p>${list(p.unread_3d_by_site)}` : ""}`;
+   ${Object.keys(p.unread_3d_by_site || {}).length ? `<p class="sub"><strong>Not read in the last 3 days, by site</strong></p>${list(p.unread_3d_by_site)}` : ""}
+   ${Object.keys(p.unreadable || {}).length ? `<p class="sub"><strong>Sites that can't be read</strong> (not tried; open or closed comes from the repos)</p>
+    ${Object.entries(p.unreadable).map(([h, u]) => `<p class="sub">${esc(h)}: ${esc(u.open)} open. ${esc(u.why)}</p>`).join("")}` : ""}`;
 }
 
 /* ---------- settings, backup, calendar ---------- */
