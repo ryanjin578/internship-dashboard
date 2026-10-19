@@ -105,27 +105,37 @@ BAY = re.compile(r"\b(san jose|santa clara|sunnyvale|milpitas|mountain view|palo
                  r"foster city|union city|emeryville|los altos|morgan hill|san ramon|walnut creek|burlingame|"
                  r"san carlos|alameda|bay area|silicon valley)\b", re.I)
 STATES = set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split())
-FOREIGN = re.compile(r"\b(canada|india|china|taiwan|japan|korea|germany|france|united kingdom|england|israel|singapore|"
-                     r"malaysia|philippines|vietnam|mexico|brazil|australia|ireland|netherlands|poland|italy|spain|switzerland|austria|"
+FOREIGN = re.compile(r"\b(canada|india|china|taiwan|japan|korea|germany|france|united kingdom|uk|england|israel|singapore|"
+                     r"malaysia|philippines|vietnam|(?<!new )mexico|brazil|australia|ireland|netherlands|poland|italy|spain|switzerland|austria|"
                      r"czech|bangalore|bengaluru|hyderabad|shanghai|beijing|toronto|ontario|quebec|munich|penang|hsinchu|"
                      r"tokyo|seoul|paris|london|amsterdam|gdansk|kaohsiung|noida|norway|sweden|denmark|finland|belgium|scotland|"
-                     r"hungary|romania|portugal|greece|turkey|thailand|indonesia|new zealand|chile|argentina|costa rica|"
-                     r"hong kong|macau|armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest|saudi arabia|riyadh|qatar|egypt|south africa)\b", re.I)
+                     r"hungary|romania|portugal|greece|turkey|t[uü]rkiye|thailand|indonesia|new zealand|chile|argentina|costa rica|"
+                     r"hong kong|macau|armenia|ukraine|serbia|slovakia|estonia|united arab emirates|dubai|yerevan|trondheim|budapest|saudi arabia|riyadh|qatar|egypt|south africa|"
+                     r"british columbia|b\.c\.|kanata|ottawa|montreal|petah[- ]tikva|tel aviv|haifa|belo horizonte|gratkorn|graz|villach|"
+                     r"nijmegen|eindhoven|da nang|ho chi minh|tianjin|suzhou|shenzhen|bucharest|sibiu|brno|glasgow|edinburgh|madrid|barcelona|"
+                     r"bangkok|istanbul|aveiro|selangor|petaling jaya|pasir gudang|kuala lumpur|dresden|regensburg|grenoble)\b", re.I)
 
 
-def is_us(loc):
-    """Unknown or ambiguous locations are kept; clearly foreign ones are dropped."""
-    if not loc:
+def _is_us_part(loc):
+    if re.search(r"united states|\busa\b|\bu\.s\.", loc, re.I):
         return True
     iso3 = re.match(r"([A-Z]{3})\s+-\s", loc)  # Workday sites that lead with a country code: "SGP - Woodlands"
     if iso3:
         return iso3.group(1) == "USA"
-    for m in re.finditer(r"(?:,|-)\s*([A-Z]{2})\b", loc):
-        if m.group(1) in STATES:
-            return True
-    if re.search(r"united states|\busa\b|\bu\.s\.|remote", loc, re.I) or BAY.search(loc):
+    if FOREIGN.search(loc):  # before state codes: "Munich, DE" is not Delaware
+        return False
+    code = re.search(r",\s*([A-Za-z]{2})\s*$", loc)  # "Pasir Gudang, MY", "Dublin, County Dublin, IE", "Seongnam-si, kr"
+    if code and code.group(1).upper() not in STATES | {"US"}:
+        return False
+    return True
+
+
+def is_us(loc):
+    """Unknown or ambiguous locations are kept; clearly foreign ones are dropped. A list of locations
+    ("Santa Clara, CA; Toronto, ON" or "San Jose, CA or Toronto") is kept when any of them is in the US."""
+    if not loc:
         return True
-    return not FOREIGN.search(loc)
+    return any(_is_us_part(p) for p in re.split(r";|\sor\s", loc) if p.strip())
 
 
 def lane_of(title):
@@ -195,17 +205,36 @@ SEMI_NAME = re.compile(r"\b(semiconductor\w*|semi|micro\w*|electronics?|silicon|
 
 GRAD = re.compile(r"\b(ph\.?\s?d|doctoral|master'?s|m\.s\.|ms|mba|graduate students?|meng)\b", re.I)
 UNDERGRAD = re.compile(r"\b(bachelor'?s|b\.s\.|bs|bsee|bsce|undergrad\w*|b\.e\.)\b", re.I)
-PURSUING_GRAD = re.compile(r"(pursuing|enrolled in|candidate for)[^.\n]{0,40}\b(ph\.?\s?d|doctoral|master'?s|m\.s\.|graduate degree)", re.I)
+# A grad degree stated as what the student is or must be: "Currently enrolled in an EE (or related) MS or PhD program",
+# "Master's student in EE", "Master or PhD graduate candidates", "MSEE", "requires a Masters or PhD"
+_GDEG = r"(ph\.?\s?d|doctoral|masters?|master's|m\.s\.|(?-i:MS)|msc|m\.sc\.?|msee|mscs|graduate degree|graduate program)"
+GRAD_REQ = re.compile(
+    rf"\b(pursuing|enrolled|enrollment|working towards?|candidate for|completing|completion of|studying|requires?|required|must be)\b"
+    rf"[^.\n]{{0,60}}\b{_GDEG}(?![\w-])"
+    rf"|\b{_GDEG}( or (ph\.?\s?d|doctoral|master'?s?))?( graduate)? (students?|candidates?|thesis|programs?|level)\b"
+    rf"|\bgraduate (students?|candidates?)\b|\b(masters?|master's|ph\.?\s?d)('s)? (degree|in|of science)\b|\bmsee\b", re.I)
+# Anything a BS student fits: "Bachelor's or Master's", "B.S./M.S.", "undergraduate", class years. A finished BS
+# ("Completed a B.S. degree ... Graduate student") doesn't count; "pursuing or recently completed a BS" does.
+UNDER_OK = re.compile(r"(?<!(?<!recently )completed a )(?<!(?<!recently )completed an )\b(bachelor'?s?|undergrad\w*|b\.s\.|(?-i:BS)(EE|CS|CE)?|bsc|b\.e\.|b\.tech|"
+                      r"freshm[ae]n|sophomores?|juniors?)(?!\w)", re.I)
+NOT_REQUIRED = re.compile(r"prefer|\bplus\b|bonus|compensation|\bpay\b|nice to have|desired|ideal", re.I)
 
 
 def grad_only(title, desc="", degrees=()):
     """True when an undergrad (BS) student can't apply."""
     if degrees and "Bachelor's" not in degrees and any(d in degrees for d in ("Master's", "PhD", "MBA")):
         return True
-    if GRAD.search(title) and not UNDERGRAD.search(title):
+    if UNDERGRAD.search(title):
+        return False
+    if GRAD.search(title):
         return True
-    if desc and PURSUING_GRAD.search(desc) and not re.search(r"(pursuing|enrolled in)[^.\n]{0,60}\b(bachelor|undergrad|b\.s\.|bs)\b", desc, re.I):
-        return True
+    if not desc or UNDER_OK.search(desc):
+        return False
+    for m in GRAD_REQ.finditer(desc):  # "A masters or doctoral candidate is preferred" leaves the door open
+        a = max(desc.rfind(c, 0, m.start()) for c in ".!?\n") + 1
+        b = min((i for i in (desc.find(c, m.end()) for c in ".!?\n") if i >= 0), default=len(desc))
+        if not NOT_REQUIRED.search(desc[a:b]):
+            return True
     return False
 
 

@@ -72,7 +72,7 @@ tr.row:hover td{background:var(--raised)}
 .status-select{border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--raised);padding:2px 4px;font-size:13px}
 
 .lane{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.lane.sales{background:var(--accent)} .lane.swe{background:var(--swe)} .lane.hw{background:var(--hw)}
+.lane.sales,.lane.fae{background:var(--accent)}.lane.swe{background:var(--swe)} .lane.hw{background:var(--hw)}
 .chip{display:inline-block;font-size:12px;padding:1px 7px;border-radius:10px;margin:2px 4px 0 0;background:var(--bg);color:var(--muted);border:1px solid var(--rule)}
 .chip.flag{background:var(--red-soft);color:var(--red);border-color:transparent}
 .chip.good{background:var(--accent-soft);color:var(--accent);border-color:transparent}
@@ -178,6 +178,10 @@ const KEY = "s27dash.v1";
 const STATUSES = ["Saved","Applied","OA","Interview","Offer","Rejected","Withdrawn"];
 const ACTIVE = ["Applied","OA","Interview"];
 const LANES = {sales:"Sales / FAE", swe:"Software / firmware", hw:"Hardware"};
+/* Openings filter splits the sales lane: FAE / applications engineering vs. the rest of sales */
+const KINDS = {sales:"Sales related", fae:"FAE", swe:"Software / firmware", hw:"Hardware"};
+const FAE = /\b(field applications?|fae|applications? engineer\w*|application engineering|product applications)\b/i;
+const kindOf = l => l.lane === "sales" ? (FAE.test(l.title) ? "fae" : "sales") : l.lane;
 const DEFAULT_PLANNED = `In progress, NOT finished (as of Oct 2026). Planned by Dec 2026:
 - STM32 bare-metal C from the reference manual: GPIO, SysTick, timer interrupts, EXTI
 - UART driver: printf over serial, interrupt RX with ring buffer
@@ -201,7 +205,7 @@ const blank = () => ({items:{}, hidden:{}, contacts:[], companyNotes:{}, checked
 let S = load();
 let L = {listings:[], generated_at:null}, SRC = {sources:[]}, CO = [];
 let prevVisit = S.lastVisit;
-const ui = {tab:"board", feed:{q:"", lanes:new Set(["sales"]), bay:false, tier:false, clean:false, fresh:false, coop:"all", limit:60},
+const ui = {tab:"board", feed:{q:"", lanes:new Set(["sales","fae"]), bay:true, tier:false, clean:false, fresh:false, coop:"all", limit:60},
   co:{q:"", open:false, manual:false}, sortItems:"urgency"};
 
 function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s) return normalize(s); }catch(e){} return blank(); }
@@ -627,7 +631,7 @@ function setStatus(id, s){
 /* ---------- feed ---------- */
 function feedList(){
   const f = ui.feed, q = norm(f.q), saved = new Set(Object.values(S.items).map(i => i.lid));  // saved roles live in Apply later
-  return L.listings.filter(l => l.status === "open" && !l.excluded && !S.hidden[l.id] && !saved.has(l.id) && f.lanes.has(l.lane)
+  return L.listings.filter(l => l.status === "open" && !l.excluded && !S.hidden[l.id] && !saved.has(l.id) && f.lanes.has(kindOf(l))
     && (!f.bay || l.bay) && (!f.tier || l.tier === "P1" || l.tier === "P2") && (!f.clean || !l.flags.length)
     && (!f.fresh || (prevVisit ? l.first_seen > prevVisit : l.first_seen === today()))
     && (f.coop === "all" || (f.coop === "summer" ? l.term === "Summer 2027" : (l.coop || /Spring|Fall|Winter/.test(l.term))))
@@ -636,11 +640,11 @@ function feedList(){
 function feedPanel(wide){
   const f = ui.feed, list = feedList(), shown = list.slice(0, f.limit);
   const tog = (k, label) => `<button class="toggle" data-tog="${k}" aria-pressed="${!!f[k]}">${label}</button>`;
-  const lane = k => `<button class="toggle" data-lane="${k}" aria-pressed="${f.lanes.has(k)}"><span class="lane ${k}"></span>${LANES[k]}</button>`;
+  const lane = k => `<button class="toggle" data-lane="${k}" aria-pressed="${f.lanes.has(k)}"><span class="lane ${k}"></span>${KINDS[k]}</button>`;
   return `<section class="panel">
    <header><h2>${wide ? "All openings" : "Openings"}</h2><span class="count">${list.length} match these filters</span>${wide ? `<button class="btn small" id="addManual">Add role</button>` : ""}</header>
    <div class="filters"><input type="search" id="feedQ" placeholder="Search company, role, city" value="${esc(f.q)}" aria-label="Search openings">
-     ${lane("sales")}${lane("swe")}${lane("hw")}${tog("bay","Bay Area")}${tog("tier","P1 and P2")}${tog("clean","No flags")}${tog("fresh","New since last visit")}
+     ${lane("sales")}${lane("fae")}${lane("swe")}${lane("hw")}${tog("bay","Bay Area")}${tog("tier","P1 and P2")}${tog("clean","No flags")}${tog("fresh","New since last visit")}
      <select class="status-select" id="coop" aria-label="Term"><option value="all">Any term</option><option value="summer"${f.coop==="summer"?" selected":""}>Summer 2027</option><option value="off"${f.coop==="off"?" selected":""}>Co-op and off-season</option></select></div>
    <ul class="feed${wide ? " wide" : ""}">${shown.map(l => feedRow(l, wide)).join("") || `<li class="empty">No openings match. Loosen a filter.</li>`}</ul>
    ${list.length > shown.length ? `<button class="btn more" id="more">Show ${Math.min(60, list.length - shown.length)} more</button>` : ""}

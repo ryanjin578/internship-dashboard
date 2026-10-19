@@ -73,6 +73,8 @@ def a_smartrecruiters(s):
         d = jget(f"https://api.smartrecruiters.com/v1/companies/{s['company']}/postings?q={quote(q)}&limit=100")
         for j in d.get("content", []):
             loc = j.get("location") or {}
+            if loc.get("country") and loc["country"].lower() != "us":  # "DE" would otherwise pass as Delaware
+                continue
             rows.append({"title": j.get("name", ""), "location": ", ".join(x for x in [loc.get("city"), loc.get("region"), loc.get("country", "").upper()] if x),
                          "url": f"https://jobs.smartrecruiters.com/{s['company']}/{j['id']}",
                          "detail": ["smartrecruiters", f"https://api.smartrecruiters.com/v1/companies/{s['company']}/postings/{j['id']}"]})
@@ -87,6 +89,9 @@ def a_oracle(s):
         d = jget(url)
         for item in d.get("items", []):
             for j in item.get("requisitionList", []):
+                countries = {j.get("PrimaryLocationCountry")} | {x.get("CountryCode") for x in j.get("secondaryLocations") or []}
+                if j.get("PrimaryLocationCountry") and "US" not in countries:
+                    continue
                 rows.append({"title": j.get("Title", ""), "location": j.get("PrimaryLocation", ""),
                              "url": f"https://{s['host']}/hcmUI/CandidateExperience/en/sites/{s['site']}/job/{j['Id']}",
                              "desc": strip_html(j.get("ShortDescriptionStr", "")),
@@ -377,9 +382,11 @@ CLOSED_PAGE = re.compile(r"no longer (available|accepting|open|active|posted)|po
 
 
 def fetch_detail(d):
-    """Full description text for a detail pointer; raises Gone when the site says the posting no longer exists."""
+    """(full description text, country code or None) for a detail pointer; raises Gone when the site says the posting
+    no longer exists. Only Workday says the country: its search shows "2 Locations" or a bare city like "Gratkorn"."""
     try:
-        return _fetch_detail(d)
+        r = _fetch_detail(d)
+        return r if isinstance(r, tuple) else (r, None)
     except HTTPError as e:
         if e.code in (404, 410):  # Workday, Greenhouse and Lever answer 404 for a removed posting
             raise Gone(f"HTTP {e.code}")
@@ -391,7 +398,11 @@ def fetch_detail(d):
 def _fetch_detail(d):
     kind, url = d[0], d[1]
     if kind == "workday":
-        return strip_html(jget(url).get("jobPostingInfo", {}).get("jobDescription", ""))
+        j = jget(url).get("jobPostingInfo", {})
+        country = ((j.get("jobRequisitionLocation") or {}).get("country") or {}).get("alpha2Code")
+        if country and country != "US" and any(re.match(r"(USA|United States)\b", x) for x in j.get("additionalLocations") or []):
+            country = "US"  # posted abroad with a US site as an additional location
+        return strip_html(j.get("jobDescription", "")), country
     if kind == "smartrecruiters":
         j = jget(url)
         if j.get("active") is False:
@@ -502,8 +513,10 @@ def fetch_details(tasks, fill_cap, per_host, budget_s):
                 else:
                     rechecks += 1
             try:
-                txt = fetch_detail(d).strip()
-                streak = 0
+                txt, country = fetch_detail(d)
+                txt, streak = txt.strip(), 0
+                if country:
+                    l["_country"] = country
                 if len(txt) >= 80:
                     l["_full"], l["_kind"] = txt, d[0]
                     st["read"] += 1
@@ -605,17 +618,19 @@ def find_pay(text):
     return None
 
 
-TEXT_FIELDS = ("desc_hash", "hash_kind", "checked_on", "desc_changed_on", "deadline", "deadline_quote", "pay", "page_gone")
+TEXT_FIELDS = ("desc_hash", "hash_kind", "checked_on", "desc_changed_on", "deadline", "deadline_quote", "pay", "page_gone", "country")
 
 
 def apply_text(l, old):
     """Tonight's full text (inline from the board or read from the job page) updates the stored description, its hash,
     the stated deadline and pay. Without it, last night's values carry over. A different hash from the same kind of
     source is a real edit (desc_changed_on); a new source kind just resets the baseline."""
-    text, kind, gone = l.pop("_full", ""), l.pop("_kind", None), l.pop("_gone", None)
+    text, kind, gone, country = l.pop("_full", ""), l.pop("_kind", None), l.pop("_gone", None), l.pop("_country", None)
     for k in TEXT_FIELDS:
         if old.get(k) and not l.get(k):
             l[k] = old[k]
+    if country:
+        l["country"] = country
     if gone:
         l["page_gone"] = old.get("page_gone") or TODAY
         if old.get("desc") and len(old["desc"]) > len(l.get("desc") or ""):
@@ -871,8 +886,9 @@ def main():
             continue
         d = l.get("detail") or detail_from_url(l.get("url"))
         old = history(lid)
-        if d:
-            tasks.append((FILL, rank(l), l, d) if not old.get("desc_hash") else (RECHECK, (old.get("checked_on") or "", rank(l)), l, d))
+        if d:  # Workday postings read before the country was kept go first, so foreign ones drop out in one night
+            new = not old.get("desc_hash") or (d[0] == "workday" and not old.get("country"))
+            tasks.append((FILL, rank(l), l, d) if new else (RECHECK, (old.get("checked_on") or "", rank(l)), l, d))
     for lid, old in prev.items():
         if lid in current or lid in carried_old or old["status"] != "open" or (only and norm(old["company"]) not in only) \
                 or any(s in failed_sources for s in old.get("sources", [])):
@@ -933,13 +949,14 @@ def main():
             continue
         listings.append(old)
 
-    # Off-list companies keep only technical sales roles. Grad-only and clearance postings are dropped, except ones
-    # already shown before: those stay, marked "excluded", so a saved role whose posting changed says why.
+    # Off-list companies keep only technical sales roles. Foreign, grad-only and clearance postings are dropped, except
+    # ones already shown before: those stay, marked "excluded", so a saved role whose posting changed says why.
     kept = []
     for l in listings:
         if not (l.get("known") or (l["lane"] == "sales" and ECE_SALES.search(l["title"]))):
             continue
-        why = ("Grad students only" if grad_only(l["title"], l.get("desc", ""), l.get("degrees", []))
+        why = ("Outside the US" if l.get("country", "US") != "US"
+               else "Grad students only" if grad_only(l["title"], l.get("desc", ""), l.get("degrees", []))
                else "Needs a security clearance" if needs_clearance(l.get("desc", "")) else None)
         if why and l["id"] not in prev and not l.get("prev_ids"):
             continue
@@ -950,7 +967,7 @@ def main():
         kept.append(l)
     listings = kept
     for l in listings:
-        for k in ("detail", "_full", "_kind", "_gone"):
+        for k in ("detail", "_full", "_kind", "_gone", "_country"):
             l.pop(k, None)
         l["bay"] = bool(BAY.search(l.get("location", "")))
         l["flags"], l["tags"] = eligibility(l["title"], l.get("desc", ""))
